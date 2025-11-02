@@ -33,6 +33,22 @@ class TicketHandler {
         const slug = this.slugify(user.username);
         const channelName = `ticket-${slug || user.id.slice(-4)}`;
 
+        // Preflight: ensure the bot has the permissions it needs
+        const me = guild.members.me ?? (await guild.members.fetchMe().catch(() => null));
+        const missingPerms = [];
+        if (!me || !me.permissions.has(PermissionFlagsBits.ManageChannels)) {
+            missingPerms.push('Manage Channels');
+        }
+        if (!me || !me.permissions.has(PermissionFlagsBits.ViewChannel)) {
+            missingPerms.push('View Channels');
+        }
+        if (missingPerms.length) {
+            return interaction.reply({
+                content: `❌ I need the following permissions to create ticket channels: ${missingPerms.join(', ')}. Please grant these to my highest role and try again.`,
+                ephemeral: true
+            });
+        }
+
         // Verificar si el usuario ya tiene un ticket abierto
         const existingTicket = guild.channels.cache.find(
             channel => channel.name === channelName && channel.type === ChannelType.GuildText
@@ -50,6 +66,7 @@ class TicketHandler {
         try {
             // Obtener la categoría de tickets
             const ticketCategory = guild.channels.cache.get(config.ticketsCategory);
+            const permsInParent = ticketCategory ? me?.permissionsIn(ticketCategory) : null;
             
             // Si no es una categoría válida, crear canal sin categoría
             const channelOptions = {
@@ -69,23 +86,35 @@ class TicketHandler {
                             PermissionFlagsBits.ReadMessageHistory,
                             PermissionFlagsBits.AttachFiles
                         ]
-                    },
-                    {
-                        id: config.supportRole,
-                        allow: [
-                            PermissionFlagsBits.ViewChannel,
-                            PermissionFlagsBits.SendMessages,
-                            PermissionFlagsBits.ReadMessageHistory,
-                            PermissionFlagsBits.AttachFiles,
-                            PermissionFlagsBits.ManageMessages
-                        ]
                     }
                 ]
             };
 
+            // Añadir overwrite para el rol de soporte solo si existe
+            const supportRole = guild.roles.cache.get(config.supportRole);
+            if (supportRole) {
+                channelOptions.permissionOverwrites.push({
+                    id: supportRole.id,
+                    allow: [
+                        PermissionFlagsBits.ViewChannel,
+                        PermissionFlagsBits.SendMessages,
+                        PermissionFlagsBits.ReadMessageHistory,
+                        PermissionFlagsBits.AttachFiles,
+                        PermissionFlagsBits.ManageMessages
+                    ]
+                });
+            } else {
+                console.warn('config.supportRole no encontrado en el servidor; creando ticket sin overwrite de soporte.');
+            }
+
             // Solo añadir parent si es una categoría válida
             if (ticketCategory && ticketCategory.type === 4) { // 4 = CategoryChannel
-                channelOptions.parent = ticketCategory;
+                // Verificar permisos dentro de la categoría
+                if (permsInParent?.has(PermissionFlagsBits.ManageChannels) && permsInParent?.has(PermissionFlagsBits.ViewChannel)) {
+                    channelOptions.parent = ticketCategory;
+                } else {
+                    console.warn('El bot no tiene permisos suficientes en la categoría de tickets; se creará el canal sin categoría.');
+                }
             }
 
             // Crear el canal del ticket
@@ -117,7 +146,7 @@ class TicketHandler {
         } catch (error) {
             console.error('Error creando ticket:', error);
             await interaction.editReply({
-                content: '❌ There was an error creating your ticket. Please contact an administrator.'
+                content: `❌ There was an error creating your ticket. ${error?.code === 50013 ? 'Missing Permissions: make sure my role has Manage Channels and is above the category.' : ''}`
             });
         }
     }
