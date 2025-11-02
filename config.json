@@ -1,0 +1,28 @@
+{
+  "token": "MTQzNDU0MDU5MDYxOTU2MjAxNA.GqFe6W.qVLjnolTY1tVTNO1Jg7Xg24_WpkMfLZPFE3-sM",
+  "clientId": "1434540590619562014",
+  "guildId": "1434533421266505778",
+  "ticketsCategory": "1434536298143813773",
+  "supportRole": "1434537778674143287",
+  "adminRole": "1434537186140754043",
+  "logChannel": "",
+  "ticketPanelChannel": "1434536298143813773",
+  "colors": {
+    "primary": "#9d4edd",
+    "secondary": "#c77dff",
+    "success": "#06d6a0",
+    "error": "#ef476f",
+    "warning": "#ffd166"
+  },
+  "emojis": {
+    "ticket": "🎫",
+    "purchases": "🛒",
+    "support": "💬",
+    "replace": "🔄",
+    "notReceived": "📦",
+    "close": "🔒",
+    "delete": "🗑️",
+    "add": "➕",
+    "remove": "➖"
+  }
+}
