@@ -1,0 +1,27 @@
+{
+  "token": "REEMPLAZA_CON_TU_TOKEN_DEL_BOT",
+  "clientId": "REEMPLAZA_CON_EL_ID_DE_TU_BOT",
+  "guildId": "REEMPLAZA_CON_EL_ID_DE_TU_SERVIDOR",
+  "ticketsCategory": "REEMPLAZA_CON_EL_ID_DE_LA_CATEGORIA_TICKETS",
+  "supportRole": "REEMPLAZA_CON_EL_ID_DEL_ROL_SOPORTE",
+  "adminRole": "REEMPLAZA_CON_EL_ID_DEL_ROL_ADMIN",
+  "logChannel": "REEMPLAZA_CON_EL_ID_DEL_CANAL_LOGS",
+  "colors": {
+    "primary": "#9d4edd",
+    "secondary": "#c77dff",
+    "success": "#06d6a0",
+    "error": "#ef476f",
+    "warning": "#ffd166"
+  },
+  "emojis": {
+    "ticket": "🎫",
+    "purchases": "🛒",
+    "support": "💬",
+    "replace": "🔄",
+    "notReceived": "📦",
+    "close": "🔒",
+    "delete": "🗑️",
+    "add": "➕",
+    "remove": "➖"
+  }
+}
