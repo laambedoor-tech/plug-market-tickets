@@ -28,10 +28,14 @@ class TicketHandler {
         const category = interaction.values[0];
         const user = interaction.user;
         const guild = interaction.guild;
+        
+        // Sanitize username for channel name (Discord channel names cannot contain '.')
+        const slug = this.slugify(user.username);
+        const channelName = `ticket-${slug || user.id.slice(-4)}`;
 
         // Verificar si el usuario ya tiene un ticket abierto
         const existingTicket = guild.channels.cache.find(
-            channel => channel.name === `ticket-${user.username.toLowerCase()}` && channel.type === ChannelType.GuildText
+            channel => channel.name === channelName && channel.type === ChannelType.GuildText
         );
 
         if (existingTicket) {
@@ -49,7 +53,7 @@ class TicketHandler {
             
             // Si no es una categoría válida, crear canal sin categoría
             const channelOptions = {
-                name: `ticket-${user.username.toLowerCase()}`,
+                name: channelName,
                 type: ChannelType.GuildText,
                 topic: `Ticket by ${user.tag} (${user.id}) - Category: ${category}`,
                 permissionOverwrites: [
@@ -266,6 +270,15 @@ class TicketHandler {
             embeds: [embed],
             components: []
         });
+    }
+
+    static slugify(name) {
+        if (!name) return '';
+        return name
+            .toLowerCase()
+            .replace(/[^a-z0-9-]/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
     }
 
     static async sendTicketLog(guild, user, channel, category, action, staff = null) {
