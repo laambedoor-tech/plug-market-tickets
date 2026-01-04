@@ -18,8 +18,8 @@ module.exports = {
         // Registrar comandos slash si es necesario
         console.log('🔄 Verificando comandos slash...');
         
-        // Enviar panel de tickets automáticamente
-        await sendTicketPanel(client);
+        // Enviar panel de tickets automáticamente (DESACTIVADO)
+        // await sendTicketPanel(client);
         
         console.log('✅ Bot completamente inicializado y listo para usar!');
     },

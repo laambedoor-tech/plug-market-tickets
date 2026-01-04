@@ -64,6 +64,52 @@ client.once(Events.ClientReady, () => {
     client.user.setActivity('Plug Market | /ticket', { type: ActivityType.Watching });
 });
 
+// Manejar mensajes (comandos de prefijo)
+client.on(Events.MessageCreate, async message => {
+    if (message.author.bot) return;
+    
+    const prefix = '!';
+    if (!message.content.startsWith(prefix)) return;
+    
+    const args = message.content.slice(prefix.length).trim().split(/ +/);
+    const command = args.shift().toLowerCase();
+    
+    if (command === 'embed') {
+        try {
+            const { EmbedBuilder } = require('discord.js');
+            
+            // Usar el contenido como JSON
+            const jsonString = message.content.slice(prefix.length + 'embed'.length).trim();
+            
+            if (!jsonString) {
+                return message.reply('❌ Uso: `!embed {json del embed}`');
+            }
+            
+            const embedData = JSON.parse(jsonString);
+            const embed = new EmbedBuilder(embedData);
+            
+            await message.channel.send({ embeds: [embed] });
+            await message.delete().catch(() => {});
+        } catch (error) {
+            console.error('Error en comando embed:', error);
+            message.reply(`❌ Error: ${error.message}`).then(msg => setTimeout(() => msg.delete(), 5000));
+        }
+    }
+    
+    if (command === 'help') {
+        const { EmbedBuilder } = require('discord.js');
+        const helpEmbed = new EmbedBuilder()
+            .setColor('#9d4edd')
+            .setTitle('📋 Comandos Disponibles')
+            .addFields(
+                { name: '!embed {json}', value: 'Envía un embed personalizado. Ej:\n```!embed {"title":"Mi Titulo","description":"Mi descripción","color":"#9d4edd"}```' }
+            )
+            .setTimestamp();
+        
+        return message.reply({ embeds: [helpEmbed] });
+    }
+});
+
 // Manejar interacciones
 client.on(Events.InteractionCreate, async interaction => {
     // Comandos slash
