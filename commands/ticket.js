@@ -4,42 +4,42 @@ const config = require('../config.json');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ticket')
-        .setDescription('🎫 Sistema de tickets de Plug Market')
+        .setDescription('🎫 Plug Market ticket system')
         .addSubcommand(subcommand =>
             subcommand
                 .setName('panel')
-                .setDescription('Crear el panel principal de tickets')
+                .setDescription('Create the main ticket panel')
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('close')
-                .setDescription('Cerrar el ticket actual')
+                .setDescription('Close the current ticket')
                 .addStringOption(option =>
                     option
                         .setName('reason')
-                        .setDescription('Razón para cerrar el ticket')
+                        .setDescription('Reason to close the ticket')
                         .setRequired(false)
                 )
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('add')
-                .setDescription('Añadir un usuario al ticket')
+                .setDescription('Add a user to this ticket')
                 .addUserOption(option =>
                     option
                         .setName('user')
-                        .setDescription('Usuario a añadir')
+                        .setDescription('User to add')
                         .setRequired(true)
                 )
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('remove')
-                .setDescription('Remover un usuario del ticket')
+                .setDescription('Remove a user from this ticket')
                 .addUserOption(option =>
                     option
                         .setName('user')
-                        .setDescription('Usuario a remover')
+                        .setDescription('User to remove')
                         .setRequired(true)
                 )
         ),
@@ -64,10 +64,10 @@ module.exports = {
     },
 
     async createTicketPanel(interaction) {
-        // Verificar permisos
+        // Permission check
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return interaction.reply({
-                content: '❌ You do not have permissions to create the ticket panel.',
+                content: '❌ You do not have permission to create the ticket panel.',
                 ephemeral: true
             });
         }
@@ -125,22 +125,22 @@ module.exports = {
     async closeTicket(interaction) {
         const channel = interaction.channel;
         
-        // Verificar si es un canal de ticket
+        // Check if this is a ticket channel
         if (!channel.name.startsWith('ticket-')) {
             return interaction.reply({
-                content: '❌ Este comando solo puede usarse en canales de tickets.',
+                content: '❌ This command can only be used in ticket channels.',
                 ephemeral: true
             });
         }
 
-        // Verificar permisos
+        // Permission check
         const member = interaction.member;
         const hasStaffRole = member.roles.cache.has(config.supportRole) || member.roles.cache.has(config.adminRole);
         const isTicketOwner = channel.topic && channel.topic.includes(interaction.user.id);
 
         if (!hasStaffRole && !isTicketOwner && !member.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return interaction.reply({
-                content: '❌ No tienes permisos para cerrar este ticket.',
+                content: '❌ You do not have permission to close this ticket.',
                 ephemeral: true
             });
         }
@@ -148,20 +148,20 @@ module.exports = {
         const reason = interaction.options.getString('reason') || 'Sin razón especificada';
 
         const embed = new EmbedBuilder()
-            .setTitle('🔒 Ticket Cerrado')
-            .setDescription(`Este ticket ha sido cerrado por ${interaction.user}.\\n\\n**Razón:** ${reason}`)
+            .setTitle('🔒 Ticket Closed')
+            .setDescription(`This ticket has been closed by ${interaction.user}.\\n\\n**Reason:** ${reason}`)
             .setColor(config.colors.error)
             .setTimestamp();
 
         const closeButton = new ButtonBuilder()
             .setCustomId('confirm_close')
-            .setLabel('Confirmar Cierre')
+            .setLabel('Confirm Close')
             .setStyle(ButtonStyle.Danger)
             .setEmoji('🔒');
 
         const cancelButton = new ButtonBuilder()
             .setCustomId('cancel_close')
-            .setLabel('Cancelar')
+            .setLabel('Cancel')
             .setStyle(ButtonStyle.Secondary)
             .setEmoji('❌');
 
@@ -178,21 +178,21 @@ module.exports = {
         const channel = interaction.channel;
         const user = interaction.options.getUser('user');
 
-        // Verificar si es un canal de ticket
+        // Check if this is a ticket channel
         if (!channel.name.startsWith('ticket-')) {
             return interaction.reply({
-                content: '❌ Este comando solo puede usarse en canales de tickets.',
+                content: '❌ This command can only be used in ticket channels.',
                 ephemeral: true
             });
         }
 
-        // Verificar permisos
+        // Permission check
         const member = interaction.member;
         const hasStaffRole = member.roles.cache.has(config.supportRole) || member.roles.cache.has(config.adminRole);
 
         if (!hasStaffRole && !member.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return interaction.reply({
-                content: '❌ No tienes permisos para añadir usuarios a este ticket.',
+                content: '❌ You do not have permission to add users to this ticket.',
                 ephemeral: true
             });
         }
@@ -205,14 +205,14 @@ module.exports = {
             });
 
             const embed = new EmbedBuilder()
-                .setDescription(`✅ ${user} ha sido añadido al ticket por ${interaction.user}.`)
+                .setDescription(`✅ ${user} has been added to this ticket by ${interaction.user}.`)
                 .setColor(config.colors.success);
 
             await interaction.reply({ embeds: [embed] });
         } catch (error) {
-            console.error('Error añadiendo usuario:', error);
+            console.error('Error adding user:', error);
             await interaction.reply({
-                content: '❌ Hubo un error al añadir el usuario.',
+                content: '❌ There was an error adding the user.',
                 ephemeral: true
             });
         }
@@ -222,21 +222,21 @@ module.exports = {
         const channel = interaction.channel;
         const user = interaction.options.getUser('user');
 
-        // Verificar si es un canal de ticket
+        // Check if this is a ticket channel
         if (!channel.name.startsWith('ticket-')) {
             return interaction.reply({
-                content: '❌ Este comando solo puede usarse en canales de tickets.',
+                content: '❌ This command can only be used in ticket channels.',
                 ephemeral: true
             });
         }
 
-        // Verificar permisos
+        // Permission check
         const member = interaction.member;
         const hasStaffRole = member.roles.cache.has(config.supportRole) || member.roles.cache.has(config.adminRole);
 
         if (!hasStaffRole && !member.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return interaction.reply({
-                content: '❌ No tienes permisos para remover usuarios de este ticket.',
+                content: '❌ You do not have permission to remove users from this ticket.',
                 ephemeral: true
             });
         }
@@ -245,14 +245,14 @@ module.exports = {
             await channel.permissionOverwrites.delete(user.id);
 
             const embed = new EmbedBuilder()
-                .setDescription(`✅ ${user} ha sido removido del ticket por ${interaction.user}.`)
+                .setDescription(`✅ ${user} has been removed from this ticket by ${interaction.user}.`)
                 .setColor(config.colors.warning);
 
             await interaction.reply({ embeds: [embed] });
         } catch (error) {
-            console.error('Error removiendo usuario:', error);
+            console.error('Error removing user:', error);
             await interaction.reply({
-                content: '❌ Hubo un error al remover el usuario.',
+                content: '❌ There was an error removing the user.',
                 ephemeral: true
             });
         }

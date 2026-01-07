@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, Collection, Events, ActivityType } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, Events, ActivityType, Partials } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -13,8 +13,10 @@ if (process.env.NODE_ENV === 'production') {
 // Crear cliente de Discord
 const client = new Client({
     intents: [
-        GatewayIntentBits.Guilds
-    ]
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.DirectMessages
+    ],
+    partials: [Partials.Channel]
 });
 
 // Colección de comandos

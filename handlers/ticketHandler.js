@@ -259,15 +259,15 @@ class TicketHandler {
         
         await interaction.deferUpdate();
 
-        // Crear embed de confirmación de cierre
+        // Close confirmation embed
         const embed = new EmbedBuilder()
-            .setTitle('🔒 Ticket Cerrado')
+            .setTitle('🔒 Ticket Closed')
             .setDescription(
-                `Este ticket ha sido cerrado por ${interaction.user}.\\n\\n` +
-                `**Estado:** Cerrado\\n` +
-                `**Cerrado por:** ${interaction.user}\\n` +
-                `**Fecha:** <t:${Math.floor(Date.now() / 1000)}:F>\\n\\n` +
-                `Este canal será eliminado en **10 segundos**. Si necesitas guardar alguna información, hazlo ahora.`
+                `This ticket has been closed by ${interaction.user}.\\n\\n` +
+                `**Status:** Closed\\n` +
+                `**Closed by:** ${interaction.user}\\n` +
+                `**Date:** <t:${Math.floor(Date.now() / 1000)}:F>\\n\\n` +
+                `This channel will be deleted in **10 seconds**. Please save any important information now.`
             )
             .setColor(config.colors.error)
             .setTimestamp();
@@ -280,7 +280,7 @@ class TicketHandler {
         // Intentar enviar solicitud de review al creador del ticket
         const userId = channel.topic?.match(/\((\d+)\)/)?.[1];
         const ticketOwner = userId ? await interaction.client.users.fetch(userId).catch(() => null) : null;
-        const categoryFromTopic = channel.topic?.match(/Category:\s([^)]*)$/)?.[1]?.trim() || 'Desconocida';
+        const categoryFromTopic = channel.topic?.match(/Category:\s([^)]*)$/)?.[1]?.trim() || 'Unknown';
 
         if (ticketOwner) {
             await this.sendReviewRequest({
@@ -291,28 +291,28 @@ class TicketHandler {
             });
         }
 
-        // Enviar log si está configurado
+        // Send log if configured
         if (config.logChannel) {
-            const userId = channel.topic?.match(/\\((\\d+)\\)/)?.[1];
+            const userId = channel.topic?.match(/\((\d+)\)/)?.[1];
             if (userId) {
                 const user = await interaction.client.users.fetch(userId).catch(() => null);
                 await this.sendTicketLog(interaction.guild, user, channel, 'unknown', 'closed', interaction.user);
             }
         }
 
-        // Eliminar el canal después de 10 segundos
+        // Delete the channel after 10 seconds
         setTimeout(async () => {
             try {
-                await channel.delete('Ticket cerrado');
+                await channel.delete('Ticket closed');
             } catch (error) {
-                console.error('Error eliminando canal de ticket:', error);
+                console.error('Error deleting ticket channel:', error);
             }
         }, 10000);
     }
 
     static async cancelClose(interaction) {
         const embed = new EmbedBuilder()
-            .setDescription('✅ El cierre del ticket ha sido cancelado.')
+            .setDescription('✅ Ticket closing has been canceled.')
             .setColor(config.colors.success);
 
         await interaction.update({
@@ -335,20 +335,20 @@ class TicketHandler {
         if (!logChannel) return;
 
         const embed = new EmbedBuilder()
-            .setTitle(`📊 Ticket ${action === 'created' ? 'Creado' : 'Cerrado'}`)
+            .setTitle(`📊 Ticket ${action === 'created' ? 'Created' : 'Closed'}`)
             .addFields([
                 {
-                    name: '👤 Usuario',
-                    value: user ? `${user.tag} (${user.id})` : 'Usuario desconocido',
+                    name: '👤 User',
+                    value: user ? `${user.tag} (${user.id})` : 'Unknown user',
                     inline: true
                 },
                 {
-                    name: '📁 Canal',
+                    name: '📁 Channel',
                     value: channel.toString(),
                     inline: true
                 },
                 {
-                    name: '📂 Categoría',
+                    name: '📂 Category',
                     value: this.getCategoryInfo(category).name,
                     inline: true
                 }
@@ -373,7 +373,7 @@ class TicketHandler {
         try {
             await logChannel.send({ embeds: [embed] });
         } catch (error) {
-            console.error('Error enviando log:', error);
+            console.error('Error sending log:', error);
         }
     }
 
@@ -381,27 +381,27 @@ class TicketHandler {
         const selectId = `ticket_review:${ticketChannel.id}:${user.id}:${closer.id}`;
         const starOptions = [1, 2, 3, 4, 5].map(value => ({
             label: `${'★'.repeat(value)}${'☆'.repeat(5 - value)}`,
-            description: `Calificación ${value} de 5`,
+            description: `Rating ${value} out of 5`,
             value: String(value)
         }));
 
         const selectRow = new ActionRowBuilder().addComponents(
             new StringSelectMenuBuilder()
                 .setCustomId(selectId)
-                .setPlaceholder('Elige una calificación 1-5')
+                .setPlaceholder('Choose a rating 1-5')
                 .addOptions(starOptions)
         );
 
         const embed = new EmbedBuilder()
-            .setTitle('🙏 Gracias por usar el soporte')
+            .setTitle('🙏 Thanks for using our support')
             .setDescription(
-                'Tu ticket ha sido cerrado. ¿Podrías valorar la atención recibida?\n\n' +
-                'Selecciona una opción de 1 a 5 estrellas. Esto nos ayuda a mejorar.'
+                'Your ticket has been closed. Could you rate the support you received?\n\n' +
+                'Choose a rating from 1 to 5 stars. This helps us improve.'
             )
             .addFields([
                 { name: 'Ticket', value: ticketChannel.name, inline: true },
-                { name: 'Categoría', value: category, inline: true },
-                { name: 'Cerrado por', value: closer ? closer.tag : 'Desconocido', inline: true }
+                { name: 'Category', value: category, inline: true },
+                { name: 'Closed by', value: closer ? closer.tag : 'Unknown', inline: true }
             ])
             .setColor(config.colors.primary)
             .setTimestamp();
@@ -409,7 +409,7 @@ class TicketHandler {
         try {
             await user.send({ embeds: [embed], components: [selectRow] });
         } catch (error) {
-            console.warn('No se pudo enviar la solicitud de review al usuario:', error.message);
+            console.warn('Could not send the review request DM to the user:', error.message);
         }
     }
 
@@ -417,10 +417,10 @@ class TicketHandler {
         const [ , ticketId, userId, closerId ] = interaction.customId.split(':');
         const rating = parseInt(interaction.values[0], 10);
 
-        // Confirmar al usuario en DM
+        // Confirm to the user in DM
         const thanksEmbed = new EmbedBuilder()
-            .setTitle('✅ ¡Gracias por tu valoración!')
-            .setDescription(`Has calificado el ticket con **${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}**`)
+            .setTitle('✅ Thanks for your rating!')
+            .setDescription(`You rated the ticket **${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}**`)
             .setColor(config.colors.success)
             .setTimestamp();
 
@@ -431,21 +431,21 @@ class TicketHandler {
 
         const reviewChannel = await interaction.client.channels.fetch(reviewChannelId).catch(() => null);
         if (!reviewChannel || !reviewChannel.isTextBased()) {
-            console.warn('El canal de reviews no es válido o no es de texto.');
+            console.warn('Review channel is invalid or not text-based.');
             return;
         }
 
-        const closerMention = closerId ? `<@${closerId}>` : 'Desconocido';
+        const closerMention = closerId ? `<@${closerId}>` : 'Unknown';
         const userMention = userId ? `<@${userId}>` : interaction.user.toString();
         const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
 
         const reviewEmbed = new EmbedBuilder()
-            .setTitle('📝 Nueva Review de Ticket')
-            .setDescription(`Calificación: **${stars}**`)
+            .setTitle('📝 New Ticket Review')
+            .setDescription(`Rating: **${stars}**`)
             .addFields([
-                { name: 'Usuario', value: userMention, inline: true },
-                { name: 'Cerrado por', value: closerMention, inline: true },
-                { name: 'Ticket', value: ticketId ? `#${ticketId}` : 'Desconocido', inline: true }
+                { name: 'User', value: userMention, inline: true },
+                { name: 'Closed by', value: closerMention, inline: true },
+                { name: 'Ticket', value: ticketId ? `#${ticketId}` : 'Unknown', inline: true }
             ])
             .setColor(config.colors.secondary)
             .setTimestamp();
@@ -453,7 +453,7 @@ class TicketHandler {
         try {
             await reviewChannel.send({ embeds: [reviewEmbed] });
         } catch (error) {
-            console.error('Error enviando la review al canal configurado:', error);
+            console.error('Error sending the review to the configured channel:', error);
         }
     }
 }
