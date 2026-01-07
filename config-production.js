@@ -7,6 +7,7 @@ const config = {
     adminRole: process.env.ADMIN_ROLE || "1434537186140754043",
     logChannel: process.env.LOG_CHANNEL || "",
     ticketPanelChannel: process.env.TICKET_PANEL_CHANNEL || "1434536298143813773",
+    reviewChannel: process.env.REVIEW_CHANNEL || "1458586114989228135",
     colors: {
         primary: "#9d4edd",
         secondary: "#c77dff",

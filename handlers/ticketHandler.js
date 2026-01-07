@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSelectMenuBuilder } = require('discord.js');
 const config = require('../config.json');
 
 class TicketHandler {
@@ -6,6 +6,12 @@ class TicketHandler {
         if (interaction.isStringSelectMenu()) {
             if (interaction.customId === 'ticket_category') {
                 await this.createTicket(interaction);
+                return;
+            }
+
+            if (interaction.customId.startsWith('ticket_review:')) {
+                await this.handleReviewSubmission(interaction);
+                return;
             }
         }
 
@@ -271,6 +277,20 @@ class TicketHandler {
             components: []
         });
 
+        // Intentar enviar solicitud de review al creador del ticket
+        const userId = channel.topic?.match(/\((\d+)\)/)?.[1];
+        const ticketOwner = userId ? await interaction.client.users.fetch(userId).catch(() => null) : null;
+        const categoryFromTopic = channel.topic?.match(/Category:\s([^)]*)$/)?.[1]?.trim() || 'Desconocida';
+
+        if (ticketOwner) {
+            await this.sendReviewRequest({
+                user: ticketOwner,
+                closer: interaction.user,
+                ticketChannel: channel,
+                category: categoryFromTopic
+            });
+        }
+
         // Enviar log si está configurado
         if (config.logChannel) {
             const userId = channel.topic?.match(/\\((\\d+)\\)/)?.[1];
@@ -354,6 +374,86 @@ class TicketHandler {
             await logChannel.send({ embeds: [embed] });
         } catch (error) {
             console.error('Error enviando log:', error);
+        }
+    }
+
+    static async sendReviewRequest({ user, closer, ticketChannel, category }) {
+        const selectId = `ticket_review:${ticketChannel.id}:${user.id}:${closer.id}`;
+        const starOptions = [1, 2, 3, 4, 5].map(value => ({
+            label: `${'★'.repeat(value)}${'☆'.repeat(5 - value)}`,
+            description: `Calificación ${value} de 5`,
+            value: String(value)
+        }));
+
+        const selectRow = new ActionRowBuilder().addComponents(
+            new StringSelectMenuBuilder()
+                .setCustomId(selectId)
+                .setPlaceholder('Elige una calificación 1-5')
+                .addOptions(starOptions)
+        );
+
+        const embed = new EmbedBuilder()
+            .setTitle('🙏 Gracias por usar el soporte')
+            .setDescription(
+                'Tu ticket ha sido cerrado. ¿Podrías valorar la atención recibida?\n\n' +
+                'Selecciona una opción de 1 a 5 estrellas. Esto nos ayuda a mejorar.'
+            )
+            .addFields([
+                { name: 'Ticket', value: ticketChannel.name, inline: true },
+                { name: 'Categoría', value: category, inline: true },
+                { name: 'Cerrado por', value: closer ? closer.tag : 'Desconocido', inline: true }
+            ])
+            .setColor(config.colors.primary)
+            .setTimestamp();
+
+        try {
+            await user.send({ embeds: [embed], components: [selectRow] });
+        } catch (error) {
+            console.warn('No se pudo enviar la solicitud de review al usuario:', error.message);
+        }
+    }
+
+    static async handleReviewSubmission(interaction) {
+        const [ , ticketId, userId, closerId ] = interaction.customId.split(':');
+        const rating = parseInt(interaction.values[0], 10);
+
+        // Confirmar al usuario en DM
+        const thanksEmbed = new EmbedBuilder()
+            .setTitle('✅ ¡Gracias por tu valoración!')
+            .setDescription(`Has calificado el ticket con **${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}**`)
+            .setColor(config.colors.success)
+            .setTimestamp();
+
+        await interaction.update({ embeds: [thanksEmbed], components: [] });
+
+        const reviewChannelId = config.reviewChannel;
+        if (!reviewChannelId) return;
+
+        const reviewChannel = await interaction.client.channels.fetch(reviewChannelId).catch(() => null);
+        if (!reviewChannel || !reviewChannel.isTextBased()) {
+            console.warn('El canal de reviews no es válido o no es de texto.');
+            return;
+        }
+
+        const closerMention = closerId ? `<@${closerId}>` : 'Desconocido';
+        const userMention = userId ? `<@${userId}>` : interaction.user.toString();
+        const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+
+        const reviewEmbed = new EmbedBuilder()
+            .setTitle('📝 Nueva Review de Ticket')
+            .setDescription(`Calificación: **${stars}**`)
+            .addFields([
+                { name: 'Usuario', value: userMention, inline: true },
+                { name: 'Cerrado por', value: closerMention, inline: true },
+                { name: 'Ticket', value: ticketId ? `#${ticketId}` : 'Desconocido', inline: true }
+            ])
+            .setColor(config.colors.secondary)
+            .setTimestamp();
+
+        try {
+            await reviewChannel.send({ embeds: [reviewEmbed] });
+        } catch (error) {
+            console.error('Error enviando la review al canal configurado:', error);
         }
     }
 }
