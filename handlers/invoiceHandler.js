@@ -83,21 +83,35 @@ class InvoiceHandler {
                     try {
                         const parsed = JSON.parse(it);
                         name = parsed.plan ?? parsed.name ?? parsed.pid ?? `Item ${idx + 1}`;
-                        email = parsed.email ?? parsed.account_email ?? '—';
-                        password = parsed.password ?? parsed.account_password ?? '—';
+                        // Buscar en credentials primero
+                        if (parsed.credentials && typeof parsed.credentials === 'object') {
+                            email = parsed.credentials.email ?? '—';
+                            password = parsed.credentials.password ?? '—';
+                        } else {
+                            email = parsed.email ?? parsed.account_email ?? '—';
+                            password = parsed.password ?? parsed.account_password ?? '—';
+                        }
                     } catch {
                         name = it;
                         email = '—';
                         password = '—';
                     }
-                } else if (it?.pid && it?.plan) {
-                    name = `${it.pid.charAt(0).toUpperCase() + it.pid.slice(1)} ${it.plan}`;
-                    email = it.email ?? it.account_email ?? '—';
-                    password = it.password ?? it.account_password ?? '—';
                 } else {
-                    name = it?.name ?? it?.title ?? it?.plan ?? `Item ${idx + 1}`;
-                    email = it?.email ?? it?.account_email ?? '—';
-                    password = it?.password ?? it?.account_password ?? '—';
+                    // Construir nombre del producto
+                    if (it?.pid && it?.plan) {
+                        name = `${it.pid.charAt(0).toUpperCase() + it.pid.slice(1)} ${it.plan}`;
+                    } else {
+                        name = it?.name ?? it?.title ?? it?.plan ?? `Item ${idx + 1}`;
+                    }
+                    
+                    // Buscar credenciales en it.credentials primero
+                    if (it?.credentials && typeof it.credentials === 'object') {
+                        email = it.credentials.email ?? '—';
+                        password = it.credentials.password ?? '—';
+                    } else {
+                        email = it?.email ?? it?.account_email ?? '—';
+                        password = it?.password ?? it?.account_password ?? '—';
+                    }
                 }
 
                 embed.addFields({
