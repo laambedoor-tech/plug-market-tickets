@@ -75,21 +75,18 @@ function buildInvoiceEmbed(invoice, interaction) {
         .setColor(config.colors.primary)
         .setTimestamp();
 
-    // Status, ID, Completed
-    const status = invoice?.status ?? invoice?.state ?? 'Unknown';
-    const isCompleted = String(status).toLowerCase().includes('completed') ? 'Yes' : 'No';
+    // Status, ID, Replace, Email
+    const status = 'Completed';
     const replace = invoice?.replace ?? 'No';
 
     e.addFields(
-        { name: '🔖 Status', value: String(status), inline: true },
-        { name: '🆔 ID', value: shortId, inline: true },
-        { name: '✅ Completed', value: isCompleted, inline: true }
+        { name: '🔖 Status', value: status, inline: true },
+        { name: `${config.emojis.id} ID`, value: shortId, inline: true },
+        { name: `${config.emojis.replace} Replace`, value: String(replace), inline: true }
     );
 
     e.addFields(
-        { name: '<:wheeling:1459207059001315461> Replace', value: String(replace), inline: true },
-        { name: '💳 Gateway', value: invoice?.gateway ?? invoice?.payment_gateway ?? 'Unknown', inline: true },
-        { name: '📧 Email', value: invoice?.email ?? invoice?.buyer_email ?? invoice?.customer_email ?? 'Unknown', inline: true }
+        { name: `${config.emojis.email} Email`, value: invoice?.email ?? invoice?.buyer_email ?? invoice?.customer_email ?? 'Unknown', inline: false }
     );
 
     // Amounts
@@ -103,23 +100,7 @@ function buildInvoiceEmbed(invoice, interaction) {
         inline: false
     });
 
-    // Payment Info
-    const txid = invoice?.txid ?? invoice?.transaction_id ?? invoice?.payment_txid ?? invoice?.payment_intent_id ?? null;
-    const note = invoice?.note ?? invoice?.description ?? null;
-    const payerEmail = invoice?.payer_email ?? invoice?.paypal_email ?? null;
-    
-    if (txid || note || payerEmail) {
-        let paymentText = '';
-        if (payerEmail) paymentText += `Email: ${payerEmail}\n`;
-        if (txid) paymentText += `TxID: ${txid}\n`;
-        if (note) paymentText += `Note: ${String(note)}`;
-        
-        e.addFields({
-            name: '🏦 PayPal Info',
-            value: paymentText.trim() || '—',
-            inline: false
-        });
-    }
+
 
 
     // Items
