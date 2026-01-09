@@ -11,7 +11,7 @@ async function fetchInvoiceByOrderId(orderId) {
     // Prefer Supabase REST if configured
     const supabaseUrl = config.supabaseUrl || process.env.SUPABASE_URL;
     const supabaseKey = config.supabaseKey || process.env.SUPABASE_KEY;
-    const supabaseTable = config.supabaseTable || process.env.SUPABASE_TABLE || 'invoices';
+    const supabaseTable = config.supabaseTable || process.env.SUPABASE_TABLE || 'orders';
     const invoicesApiUrl = config.invoicesApiUrl || process.env.INVOICES_API_URL;
 
     if (supabaseUrl && supabaseKey) {
