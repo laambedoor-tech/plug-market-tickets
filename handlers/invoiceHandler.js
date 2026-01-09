@@ -1,6 +1,37 @@
 const { EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const config = require('../config.json');
 
+async function fetchInvoiceByOrderId(orderId) {
+    const supabaseUrl = config.supabaseUrl || process.env.SUPABASE_URL;
+    const supabaseKey = config.supabaseKey || process.env.SUPABASE_KEY;
+    const supabaseTable = config.supabaseTable || process.env.SUPABASE_TABLE || 'orders';
+
+    if (supabaseUrl && supabaseKey) {
+        const headers = {
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
+            Accept: 'application/json'
+        };
+
+        let url = `${supabaseUrl}/rest/v1/${supabaseTable}?short_id=eq.${encodeURIComponent(orderId)}&select=*&limit=1`;
+        let res = await fetch(url, { headers });
+        if (res.ok) {
+            const rows = await res.json();
+            if (Array.isArray(rows) && rows[0]) return rows[0];
+        }
+
+        if (orderId.includes('-')) {
+            url = `${supabaseUrl}/rest/v1/${supabaseTable}?id=eq.${encodeURIComponent(orderId)}&select=*&limit=1`;
+            res = await fetch(url, { headers });
+            if (res.ok) {
+                const rows = await res.json();
+                if (Array.isArray(rows) && rows[0]) return rows[0];
+            }
+        }
+    }
+    return null;
+}
+
 class InvoiceHandler {
     static async handleInteraction(interaction) {
         if (interaction.isButton()) {
@@ -8,10 +39,6 @@ class InvoiceHandler {
                 await this.showItems(interaction);
             } else if (interaction.customId.startsWith('invoice_replace:')) {
                 await this.showReplaceModal(interaction);
-            } else if (interaction.customId === 'invoice_help') {
-                await this.showHelp(interaction);
-            } else if (interaction.customId === 'invoice_review') {
-                await this.showReview(interaction);
             }
         }
 
@@ -23,20 +50,68 @@ class InvoiceHandler {
     }
 
     static async showItems(interaction) {
-        const invoiceId = interaction.customId.split(':')[1];
-        const user = interaction.user;
+        const orderId = interaction.customId.split(':')[1];
 
-        const embed = new EmbedBuilder()
-            .setTitle('📦 Order Items')
-            .setDescription(`Invoice: ${invoiceId}`)
-            .setColor(config.colors.primary)
-            .setFooter({ text: 'Plug Market', iconURL: interaction.client.user.displayAvatarURL() })
-            .setTimestamp();
+        await interaction.deferReply({ ephemeral: true });
 
-        await interaction.reply({
-            embeds: [embed],
-            ephemeral: true
-        });
+        try {
+            const invoice = await fetchInvoiceByOrderId(orderId);
+            
+            if (!invoice) {
+                return interaction.editReply({ content: `❌ No se encontró la orden.` });
+            }
+
+            let items = invoice?.items ?? invoice?.products ?? [];
+            if (typeof items === 'string') {
+                try { items = JSON.parse(items); } catch (_) { items = []; }
+            }
+
+            if (!Array.isArray(items) || items.length === 0) {
+                return interaction.editReply({ content: `❌ No hay items en esta orden.` });
+            }
+
+            const embed = new EmbedBuilder()
+                .setTitle(`📦 Order Items • ${orderId}`)
+                .setColor(config.colors.primary)
+                .setFooter({ text: 'Plug Market', iconURL: interaction.client.user.displayAvatarURL() })
+                .setTimestamp();
+
+            items.forEach((it, idx) => {
+                let name, email, password;
+                
+                if (typeof it === 'string') {
+                    try {
+                        const parsed = JSON.parse(it);
+                        name = parsed.plan ?? parsed.name ?? parsed.pid ?? `Item ${idx + 1}`;
+                        email = parsed.email ?? parsed.account_email ?? '—';
+                        password = parsed.password ?? parsed.account_password ?? '—';
+                    } catch {
+                        name = it;
+                        email = '—';
+                        password = '—';
+                    }
+                } else if (it?.pid && it?.plan) {
+                    name = `${it.pid.charAt(0).toUpperCase() + it.pid.slice(1)} ${it.plan}`;
+                    email = it.email ?? it.account_email ?? '—';
+                    password = it.password ?? it.account_password ?? '—';
+                } else {
+                    name = it?.name ?? it?.title ?? it?.plan ?? `Item ${idx + 1}`;
+                    email = it?.email ?? it?.account_email ?? '—';
+                    password = it?.password ?? it?.account_password ?? '—';
+                }
+
+                embed.addFields({
+                    name: `${idx + 1}. ${name}`,
+                    value: `📧 Email: \`${email}\`\n🔑 Password: \`${password}\``,
+                    inline: false
+                });
+            });
+
+            await interaction.editReply({ embeds: [embed] });
+        } catch (err) {
+            console.error('Error fetching items:', err);
+            await interaction.editReply({ content: `❌ Error obteniendo los items: ${err.message}` });
+        }
     }
 
     static async showReplaceModal(interaction) {
@@ -100,40 +175,6 @@ class InvoiceHandler {
                 ephemeral: true
             });
         }
-    }
-
-    static async showHelp(interaction) {
-        const embed = new EmbedBuilder()
-            .setTitle('❓ Still Need Help?')
-            .setDescription('Create a support ticket to get help from our team.')
-            .setColor(config.colors.secondary)
-            .addFields(
-                { name: 'Contact Support', value: 'Use `/ticket` to create a support ticket', inline: false }
-            )
-            .setFooter({ text: 'Plug Market Support', iconURL: interaction.client.user.displayAvatarURL() })
-            .setTimestamp();
-
-        await interaction.reply({
-            embeds: [embed],
-            ephemeral: true
-        });
-    }
-
-    static async showReview(interaction) {
-        const embed = new EmbedBuilder()
-            .setTitle('⭐ Review Us')
-            .setDescription('Help us improve by sharing your feedback!')
-            .setColor(config.colors.primary)
-            .addFields(
-                { name: 'Feedback', value: 'Your review helps us serve you better', inline: false }
-            )
-            .setFooter({ text: 'Plug Market', iconURL: interaction.client.user.displayAvatarURL() })
-            .setTimestamp();
-
-        await interaction.reply({
-            embeds: [embed],
-            ephemeral: true
-        });
     }
 }
 

@@ -188,7 +188,7 @@ function buildInvoiceEmbed(invoice, interaction) {
     
     // Botones de acción
     const seeItemsBtn = new ButtonBuilder()
-        .setCustomId(`invoice_items:${invoiceId}`)
+        .setCustomId(`invoice_items:${shortId}`)
         .setLabel('See Items')
         .setStyle(ButtonStyle.Primary)
         .setEmoji('📦');
@@ -199,20 +199,8 @@ function buildInvoiceEmbed(invoice, interaction) {
         .setStyle(ButtonStyle.Danger)
         .setEmoji('🔄');
     
-    const helpBtn = new ButtonBuilder()
-        .setCustomId('invoice_help')
-        .setLabel('Still Need Help?')
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('❓');
-    
-    const reviewBtn = new ButtonBuilder()
-        .setCustomId('invoice_review')
-        .setLabel('Review Us')
-        .setStyle(ButtonStyle.Success)
-        .setEmoji('⭐');
-    
     const buttonRow = new ActionRowBuilder()
-        .addComponents(seeItemsBtn, markReplaceBtn, helpBtn, reviewBtn);
+        .addComponents(seeItemsBtn, markReplaceBtn);
     
     return { embed: e, buttons: buttonRow };
 }
