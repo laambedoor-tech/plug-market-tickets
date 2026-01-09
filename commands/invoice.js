@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const config = require('../config.json');
 
-function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+function fetchWithTimeout(url, options = {}, timeoutMs = 2500) {
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(new Error('timeout')), timeoutMs);
     return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(t));
@@ -148,7 +148,9 @@ module.exports = {
 
     async execute(interaction) {
         const orderId = interaction.options.getString('order_id');
-        await interaction.deferReply({ ephemeral: true });
+        
+        // Responder INMEDIATAMENTE para evitar timeout de Discord (3s)
+        await interaction.deferReply({ flags: 64 }); // 64 = ephemeral flag
 
         try {
             const invoice = await fetchInvoiceByOrderId(orderId);
