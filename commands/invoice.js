@@ -15,48 +15,32 @@ async function fetchInvoiceByOrderId(orderId) {
     const invoicesApiUrl = config.invoicesApiUrl || process.env.INVOICES_API_URL;
 
     if (supabaseUrl && supabaseKey) {
-        // Primero intentamos por columna dedicada 'short_id' si existe
         const headers = {
             apikey: supabaseKey,
             Authorization: `Bearer ${supabaseKey}`,
             Accept: 'application/json'
         };
 
-        // 1) short_id = orderId
-        let url = `${supabaseUrl}/rest/v1/${supabaseTable}?short_id=eq.${encodeURIComponent(orderId)}&select=*&limit=1`;
-        console.log(`[invoice] Query short_id for ${orderId}`);
-        let res = await fetchWithTimeout(url, { headers });
-        if (!res.ok) throw new Error(`Supabase error (${res.status})`);
-        let rows = await res.json();
-        if (Array.isArray(rows) && rows[0]) return rows[0];
-
-        // 2) fallback: order_id empieza por orderId (primeros 8 dígitos)
-        // Usamos operador LIKE con sufijo % para prefijo
-        url = `${supabaseUrl}/rest/v1/${supabaseTable}?order_id=like.${encodeURIComponent(orderId)}%25&select=*&limit=1`;
-        console.log(`[invoice] Query order_id prefix for ${orderId}`);
-        res = await fetchWithTimeout(url, { headers });
-        if (!res.ok) throw new Error(`Supabase error (${res.status})`);
-        rows = await res.json();
-        if (Array.isArray(rows) && rows[0]) return rows[0];
-
-        // 2b) fallback alternativo: columna 'id' empieza por esos 8 dígitos
-        url = `${supabaseUrl}/rest/v1/${supabaseTable}?id=like.${encodeURIComponent(orderId)}%25&select=*&limit=1`;
-        console.log(`[invoice] Query id prefix for ${orderId}`);
-        res = await fetchWithTimeout(url, { headers });
-        if (!res.ok) throw new Error(`Supabase error (${res.status})`);
-        rows = await res.json();
-        if (Array.isArray(rows) && rows[0]) return rows[0];
-
-        // 3) otro fallback: id numérico exacto
-        if (/^\d+$/.test(orderId)) {
-            url = `${supabaseUrl}/rest/v1/${supabaseTable}?id=eq.${orderId}&select=*&limit=1`;
-            console.log(`[invoice] Query id exact for ${orderId}`);
-            res = await fetchWithTimeout(url, { headers });
-            if (!res.ok) throw new Error(`Supabase error (${res.status})`);
-            rows = await res.json();
-            if (Array.isArray(rows) && rows[0]) return rows[0];
+        // PostgREST ilike usa * como wildcard (no %)
+        // Buscar por prefijo en columna 'id' (UUID: 7b68de05-...)
+        const url = `${supabaseUrl}/rest/v1/${supabaseTable}?id=ilike.${encodeURIComponent(orderId)}*&select=*&limit=1`;
+        console.log(`[invoice] Query Supabase id ilike ${orderId}*`);
+        
+        const res = await fetchWithTimeout(url, { headers });
+        if (!res.ok) {
+            const errText = await res.text();
+            console.error(`[invoice] Supabase HTTP ${res.status}: ${errText}`);
+            throw new Error(`Supabase error (${res.status}): ${errText}`);
+        }
+        
+        const rows = await res.json();
+        console.log(`[invoice] Supabase response rows: ${rows.length || 0}`);
+        if (Array.isArray(rows) && rows[0]) {
+            console.log(`[invoice] Found order: ${rows[0]?.id}`);
+            return rows[0];
         }
 
+        console.log(`[invoice] No order found for prefix ${orderId}`);
         return null;
     }
 
