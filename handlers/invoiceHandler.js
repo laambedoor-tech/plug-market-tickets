@@ -144,52 +144,54 @@ class InvoiceHandler {
 
         const modal = new ModalBuilder()
             .setCustomId(`replace_account_modal:${invoiceId}`)
-            .setTitle('🔄 Mark as Replacement');
+            .setTitle('Mark as Replacement');
 
-        const userIdInput = new TextInputBuilder()
-            .setCustomId('user_id_field')
-            .setLabel('Discord User ID del cliente')
-            .setPlaceholder('Click derecho en el usuario → Copiar ID')
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true)
-            .setMinLength(17)
-            .setMaxLength(20);
-
-        const accountInput = new TextInputBuilder()
-            .setCustomId('account_field')
-            .setLabel('Cuenta / Credenciales a enviar')
-            .setPlaceholder('Ej: usuario@gmail.com | contraseña')
+        const dataInput = new TextInputBuilder()
+            .setCustomId('replacement_data')
+            .setLabel('Línea 1: User ID | Línea 2+: Credenciales')
+            .setPlaceholder('442385253525618699\nemail@gmail.com:password123')
             .setStyle(TextInputStyle.Paragraph)
             .setRequired(true)
-            .setMaxLength(500);
+            .setMinLength(20)
+            .setMaxLength(1000);
 
-        const row1 = new ActionRowBuilder().addComponents(userIdInput);
-        const row2 = new ActionRowBuilder().addComponents(accountInput);
-        modal.addComponents(row1, row2);
+        const row = new ActionRowBuilder().addComponents(dataInput);
+        modal.addComponents(row);
 
         return interaction.showModal(modal);
     }
 
     static async handleReplaceSubmit(interaction) {
-        await interaction.deferReply({ ephemeral: true });
-
         const [, invoiceId] = interaction.customId.split(':');
-        const userId = interaction.fields.getTextInputValue('user_id_field');
-        const account = interaction.fields.getTextInputValue('account_field');
+        const rawData = interaction.fields.getTextInputValue('replacement_data');
+        
+        // Separar primera línea (User ID) del resto (credenciales)
+        const lines = rawData.trim().split('\n');
+        const userId = lines[0].trim();
+        const account = lines.slice(1).join('\n').trim() || 'No credentials provided';
+
+        // Validar que el User ID tenga formato correcto
+        if (!/^\d{17,20}$/.test(userId)) {
+            return interaction.reply({
+                content: '❌ El User ID debe estar en la primera línea y tener 17-20 dígitos.',
+                ephemeral: true
+            });
+        }
 
         // Obtener usuario por ID
         const targetUser = await interaction.client.users.fetch(userId).catch(() => null);
 
         if (!targetUser) {
-            return interaction.editReply({
-                content: '❌ No se pudo encontrar al usuario. Verifica que el ID sea correcto.'
+            return interaction.reply({
+                content: '❌ No se pudo encontrar al usuario. Verifica que el ID sea correcto.',
+                ephemeral: true
             });
         }
 
-        // Enviar al usuario
-        const userEmbed = new EmbedBuilder()
+        // Enviar en el canal público (visible para todos)
+        const replacementEmbed = new EmbedBuilder()
             .setTitle('🔄 Replacement Ready')
-            .setDescription(`Your replacement is ready. Use the account below to access your product.`)
+            .setDescription(`${targetUser.toString()}, your replacement is ready. Use the account below to access your product.`)
             .setColor(config.colors.success)
             .addFields(
                 { name: '🆔 Order ID', value: invoiceId, inline: true },
@@ -199,17 +201,7 @@ class InvoiceHandler {
             .setFooter({ text: 'Plug Market • Replacement System', iconURL: interaction.client.user.displayAvatarURL() })
             .setTimestamp();
 
-        try {
-            await targetUser.send({ embeds: [userEmbed] });
-            await interaction.editReply({
-                content: `✅ Replacement enviado a ${targetUser.tag} (${targetUser.id})`
-            });
-        } catch (err) {
-            console.error('Error sending replacement:', err);
-            await interaction.editReply({
-                content: `❌ Error enviando el mensaje a ${targetUser.tag}. ¿Tiene los DMs cerrados?`
-            });
-        }
+        await interaction.reply({ embeds: [replacementEmbed] });
     }
 }
 
