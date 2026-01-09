@@ -129,10 +129,33 @@ function buildInvoiceEmbed(invoice, interaction) {
     }
     if (Array.isArray(items) && items.length) {
         const lines = items.map((it, idx) => {
-            const name = it?.name ?? it?.title ?? `Item ${idx + 1}`;
-            const qty = it?.quantity ?? it?.qty ?? 1;
-            const price = it?.price ?? it?.unit_price ?? null;
-            const priceStr = price !== null ? `• ${Number(price).toFixed(2)} €` : '';
+            // Soportar tanto objetos como strings con estructura "pid:name"
+            let name, qty, price;
+            
+            if (typeof it === 'string') {
+                // Formato: {"pid":"netflix","qty":1,"plan":"1 Month","unitAmount":150}
+                try {
+                    const parsed = JSON.parse(it);
+                    name = parsed.plan ?? parsed.name ?? parsed.pid ?? `Item ${idx + 1}`;
+                    qty = parsed.qty ?? parsed.quantity ?? 1;
+                    price = parsed.unitAmount ?? parsed.price ?? null;
+                } catch {
+                    name = it;
+                    qty = 1;
+                    price = null;
+                }
+            } else if (it?.pid && it?.plan) {
+                // Estructura de tu base de datos
+                name = `${it.pid.charAt(0).toUpperCase() + it.pid.slice(1)} ${it.plan}`;
+                qty = it.qty ?? 1;
+                price = it.unitAmount ?? it.price ?? null;
+            } else {
+                name = it?.name ?? it?.title ?? it?.plan ?? `Item ${idx + 1}`;
+                qty = it?.quantity ?? it?.qty ?? 1;
+                price = it?.price ?? it?.unit_price ?? it?.unitAmount ?? null;
+            }
+            
+            const priceStr = price !== null ? `• ${(Number(price) / 100).toFixed(2)} €` : '';
             return `${idx + 1}. ${name} x${qty} ${priceStr}`;
         }).join('\n');
         e.addFields({ name: '📦 Items', value: lines, inline: false });
@@ -192,48 +215,6 @@ function buildInvoiceEmbed(invoice, interaction) {
         .addComponents(seeItemsBtn, markReplaceBtn, helpBtn, reviewBtn);
     
     return { embed: e, buttons: buttonRow };
-            const d = typeof ts === 'string' ? Date.parse(ts) : ts; 
-            const s = Math.floor((typeof d === 'number' ? d : Date.now()) / 1000);
-            return `<t:${s}:F>`;
-        };
-        e.addFields({
-            name: 'Dates',
-            value: `${createdAt ? `Created: ${toDiscordTs(createdAt)}\n` : ''}${completedAt ? `Completed: ${toDiscordTs(completedAt)}` : ''}`.trim(),
-            inline: false
-        });
-    }
-
-    e.setFooter({ text: 'Plug Market • Invoice Lookup', iconURL: interaction.client.user.displayAvatarURL() });
-    
-    // Botones de acción
-    const seeItemsBtn = new ButtonBuilder()
-        .setCustomId(`invoice_items:${invoiceId}`)
-        .setLabel('See Items')
-        .setStyle(ButtonStyle.Primary)
-        .setEmoji('📦');
-    
-    const markReplaceBtn = new ButtonBuilder()
-        .setCustomId(`invoice_replace:${invoiceId}`)
-        .setLabel('Mark Replace')
-        .setStyle(ButtonStyle.Danger)
-        .setEmoji('🔄');
-    
-    const helpBtn = new ButtonBuilder()
-        .setCustomId('invoice_help')
-        .setLabel('Still Need Help?')
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('❓');
-    
-    const reviewBtn = new ButtonBuilder()
-        .setCustomId('invoice_review')
-        .setLabel('Review Us')
-        .setStyle(ButtonStyle.Success)
-        .setEmoji('⭐');
-    
-    const buttonRow = new ActionRowBuilder()
-        .addComponents(seeItemsBtn, markReplaceBtn, helpBtn, reviewBtn);
-    
-    return { embed: e, buttons: buttonRow };
 }
 
 module.exports = {
@@ -250,8 +231,8 @@ module.exports = {
     async execute(interaction) {
         const orderId = interaction.options.getString('order_id');
         
-        // Responder INMEDIATAMENTE para evitar timeout de Discord (3s)
-        await interaction.deferReply({ flags: 64 }); // 64 = ephemeral flag
+        // Responder públicamente (visible para todos)
+        await interaction.deferReply();
 
         try {
             const invoice = await fetchInvoiceByOrderId(orderId);
