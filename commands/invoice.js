@@ -67,51 +67,62 @@ async function fetchInvoiceByOrderId(orderId) {
 }
 
 function buildInvoiceEmbed(invoice, interaction) {
+    const invoiceId = invoice?.id ?? invoice?.order_id ?? 'Unknown';
+    const shortId = invoiceId.substring(0, 8);
+    
     const e = new EmbedBuilder()
-        .setTitle(`🧾 Invoice • ${invoice?.order_id ?? invoice?.id ?? 'Unknown'}`)
+        .setTitle(`🧾 Invoice • ${shortId}`)
         .setColor(config.colors.primary)
         .setTimestamp();
 
-    // General info
+    // Status, ID, Completed
     const status = invoice?.status ?? invoice?.state ?? 'Unknown';
-    const gateway = invoice?.gateway ?? invoice?.payment_gateway ?? 'Unknown';
-    const email = invoice?.email ?? invoice?.buyer_email ?? invoice?.customer_email ?? 'Unknown';
-    const createdAt = invoice?.created_at ?? invoice?.createdAt ?? invoice?.created ?? null;
-    const completedAt = invoice?.completed_at ?? invoice?.completedAt ?? null;
+    const isCompleted = String(status).toLowerCase().includes('completed') ? 'Yes' : 'No';
+    const replace = invoice?.replace ?? 'No';
 
     e.addFields(
-        { name: 'Status', value: String(status), inline: true },
-        { name: 'Gateway', value: String(gateway), inline: true },
-        { name: 'Email', value: String(email), inline: true }
+        { name: '🔖 Status', value: String(status), inline: true },
+        { name: '🆔 ID', value: shortId, inline: true },
+        { name: '✅ Completed', value: isCompleted, inline: true }
+    );
+
+    e.addFields(
+        { name: '🔄 Replace', value: String(replace), inline: true },
+        { name: '💳 Gateway', value: invoice?.gateway ?? invoice?.payment_gateway ?? 'Unknown', inline: true },
+        { name: '📧 Email', value: invoice?.email ?? invoice?.buyer_email ?? invoice?.customer_email ?? 'Unknown', inline: true }
     );
 
     // Amounts
-    // total_cents -> euros
     const totalPrice = (invoice?.total_price ?? invoice?.total ?? invoice?.amount ?? (typeof invoice?.total_cents === 'number' ? invoice.total_cents / 100 : null));
     const totalPaid = invoice?.total_paid ?? invoice?.paid ?? null;
-    if (totalPrice !== null || totalPaid !== null) {
-        const fmt = v => typeof v === 'number' ? `${v.toFixed(2)} €` : String(v);
-        e.addFields({
-            name: 'Amounts',
-            value: `Total Price: ${totalPrice !== null ? fmt(totalPrice) : '—'}\nTotal Paid: ${totalPaid !== null ? fmt(totalPaid) : '—'}`,
-            inline: false
-        });
-    }
+    const fmt = v => typeof v === 'number' ? `${v.toFixed(2)} €` : String(v);
+    
+    e.addFields({
+        name: '💰 Amounts',
+        value: `Total Price: ${totalPrice !== null ? fmt(totalPrice) : '—'}\nTotal Paid: ${totalPaid !== null ? fmt(totalPaid) : '—'}`,
+        inline: false
+    });
 
-    // PayPal or payment info
+    // Payment Info
     const txid = invoice?.txid ?? invoice?.transaction_id ?? invoice?.payment_txid ?? invoice?.payment_intent_id ?? null;
     const note = invoice?.note ?? invoice?.description ?? null;
     const payerEmail = invoice?.payer_email ?? invoice?.paypal_email ?? null;
+    
     if (txid || note || payerEmail) {
+        let paymentText = '';
+        if (payerEmail) paymentText += `Email: ${payerEmail}\n`;
+        if (txid) paymentText += `TxID: ${txid}\n`;
+        if (note) paymentText += `Note: ${String(note)}`;
+        
         e.addFields({
-            name: 'Payment Info',
-            value: `${payerEmail ? `Email: ${payerEmail}\n` : ''}${txid ? `TxID: ${txid}\n` : ''}${note ? `Note: ${String(note)}` : ''}`.trim() || '—',
+            name: '🏦 PayPal Info',
+            value: paymentText.trim() || '—',
             inline: false
         });
     }
 
+
     // Items
-    // Admite items como array o JSON string
     let items = invoice?.items ?? invoice?.products ?? null;
     if (typeof items === 'string') {
         try { items = JSON.parse(items); } catch (_) {}
@@ -121,13 +132,37 @@ function buildInvoiceEmbed(invoice, interaction) {
             const name = it?.name ?? it?.title ?? `Item ${idx + 1}`;
             const qty = it?.quantity ?? it?.qty ?? 1;
             const price = it?.price ?? it?.unit_price ?? null;
-            const priceStr = price !== null ? `${Number(price).toFixed(2)} €` : '';
-            return `${idx + 1}. ${name}${qty ? ` x${qty}` : ''}${priceStr ? ` • ${priceStr}` : ''}`;
+            const priceStr = price !== null ? `• ${Number(price).toFixed(2)} €` : '';
+            return `${idx + 1}. ${name} x${qty} ${priceStr}`;
         }).join('\n');
-        e.addFields({ name: 'Items', value: lines, inline: false });
+        e.addFields({ name: '📦 Items', value: lines, inline: false });
     }
 
-    // Timestamps
+    // Dates
+    const createdAt = invoice?.created_at ?? invoice?.createdAt ?? invoice?.created ?? null;
+    const completedAt = invoice?.completed_at ?? invoice?.completedAt ?? null;
+    
+    if (createdAt || completedAt) {
+        const toDiscordTs = ts => {
+            const d = typeof ts === 'string' ? Date.parse(ts) : ts; 
+            const s = Math.floor((typeof d === 'number' ? d : Date.now()) / 1000);
+            return `<t:${s}:F>`;
+        };
+        
+        if (createdAt && completedAt) {
+            e.addFields(
+                { name: '📅 Created', value: toDiscordTs(createdAt), inline: true },
+                { name: '✔️ Completed', value: toDiscordTs(completedAt), inline: true }
+            );
+        } else if (createdAt) {
+            e.addFields({ name: '📅 Created', value: toDiscordTs(createdAt), inline: false });
+        } else if (completedAt) {
+            e.addFields({ name: '✔️ Completed', value: toDiscordTs(completedAt), inline: false });
+        }
+    }
+
+    e.setFooter({ text: 'Plug Market • Invoice Lookup', iconURL: interaction.client.user.displayAvatarURL() });
+    return e;
     if (createdAt || completedAt) {
         const toDiscordTs = ts => {
             const d = typeof ts === 'string' ? Date.parse(ts) : ts; 
