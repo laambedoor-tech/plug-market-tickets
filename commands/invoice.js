@@ -75,21 +75,17 @@ function buildInvoiceEmbed(invoice, interaction) {
         .setColor(config.colors.primary)
         .setTimestamp();
 
-    // Status, ID, Completed
-    const status = invoice?.status ?? invoice?.state ?? 'Unknown';
-    const isCompleted = String(status).toLowerCase().includes('completed') ? 'Yes' : 'No';
+    // Status, ID, Replace, Email - una sola fila
     const replace = invoice?.replace ?? 'No';
 
     e.addFields(
-        { name: '🔖 Status', value: String(status), inline: true },
+        { name: '🔖 Status', value: 'Completed', inline: true },
         { name: '🆔 ID', value: shortId, inline: true },
-        { name: '✅ Completed', value: isCompleted, inline: true }
+        { name: `${config.emojis.replace} Replace`, value: String(replace), inline: true }
     );
 
     e.addFields(
-        { name: '🔄 Replace', value: String(replace), inline: true },
-        { name: '💳 Gateway', value: invoice?.gateway ?? invoice?.payment_gateway ?? 'Unknown', inline: true },
-        { name: '📧 Email', value: invoice?.email ?? invoice?.buyer_email ?? invoice?.customer_email ?? 'Unknown', inline: true }
+        { name: `${config.emojis.email} Email`, value: invoice?.email ?? invoice?.buyer_email ?? invoice?.customer_email ?? 'Unknown', inline: false }
     );
 
     // Amounts
@@ -102,24 +98,6 @@ function buildInvoiceEmbed(invoice, interaction) {
         value: `Total Price: ${totalPrice !== null ? fmt(totalPrice) : '—'}\nTotal Paid: ${totalPaid !== null ? fmt(totalPaid) : '—'}`,
         inline: false
     });
-
-    // Payment Info
-    const txid = invoice?.txid ?? invoice?.transaction_id ?? invoice?.payment_txid ?? invoice?.payment_intent_id ?? null;
-    const note = invoice?.note ?? invoice?.description ?? null;
-    const payerEmail = invoice?.payer_email ?? invoice?.paypal_email ?? null;
-    
-    if (txid || note || payerEmail) {
-        let paymentText = '';
-        if (payerEmail) paymentText += `Email: ${payerEmail}\n`;
-        if (txid) paymentText += `TxID: ${txid}\n`;
-        if (note) paymentText += `Note: ${String(note)}`;
-        
-        e.addFields({
-            name: '🏦 PayPal Info',
-            value: paymentText.trim() || '—',
-            inline: false
-        });
-    }
 
 
     // Items
@@ -161,27 +139,17 @@ function buildInvoiceEmbed(invoice, interaction) {
         e.addFields({ name: '📦 Items', value: lines, inline: false });
     }
 
-    // Dates
+    // Dates - solo Created
     const createdAt = invoice?.created_at ?? invoice?.createdAt ?? invoice?.created ?? null;
-    const completedAt = invoice?.completed_at ?? invoice?.completedAt ?? null;
     
-    if (createdAt || completedAt) {
+    if (createdAt) {
         const toDiscordTs = ts => {
             const d = typeof ts === 'string' ? Date.parse(ts) : ts; 
             const s = Math.floor((typeof d === 'number' ? d : Date.now()) / 1000);
             return `<t:${s}:F>`;
         };
         
-        if (createdAt && completedAt) {
-            e.addFields(
-                { name: '📅 Created', value: toDiscordTs(createdAt), inline: true },
-                { name: '✔️ Completed', value: toDiscordTs(completedAt), inline: true }
-            );
-        } else if (createdAt) {
-            e.addFields({ name: '📅 Created', value: toDiscordTs(createdAt), inline: false });
-        } else if (completedAt) {
-            e.addFields({ name: '✔️ Completed', value: toDiscordTs(completedAt), inline: false });
-        }
+        e.addFields({ name: '📅 Created', value: toDiscordTs(createdAt), inline: false });
     }
 
     e.setFooter({ text: 'Plug Market • Invoice Lookup', iconURL: interaction.client.user.displayAvatarURL() });
@@ -190,14 +158,14 @@ function buildInvoiceEmbed(invoice, interaction) {
     const seeItemsBtn = new ButtonBuilder()
         .setCustomId(`invoice_items:${shortId}`)
         .setLabel('See Items')
-        .setStyle(ButtonStyle.Primary)
-        .setEmoji('📦');
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji(config.emojis.notReceived);
     
     const markReplaceBtn = new ButtonBuilder()
         .setCustomId(`invoice_replace:${invoiceId}`)
         .setLabel('Mark Replace')
-        .setStyle(ButtonStyle.Danger)
-        .setEmoji('🔄');
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji(config.emojis.replace);
     
     const buttonRow = new ActionRowBuilder()
         .addComponents(seeItemsBtn, markReplaceBtn);

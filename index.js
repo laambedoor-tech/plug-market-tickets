@@ -130,13 +130,13 @@ client.on(Events.InteractionCreate, async interaction => {
             
             const reply = {
                 content: '❌ Hubo un error al ejecutar este comando.',
-                ephemeral: true
+                flags: 64 // Ephemeral
             };
             
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(reply);
+                await interaction.followUp(reply).catch(() => {});
             } else {
-                await interaction.reply(reply);
+                await interaction.reply(reply).catch(() => {});
             }
         }
     }
@@ -156,15 +156,21 @@ client.on(Events.InteractionCreate, async interaction => {
         } catch (error) {
             console.error('Error manejando interacción:', error);
             
-            const reply = {
-                content: '❌ Hubo un error al procesar tu solicitud.',
-                ephemeral: true
-            };
-            
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(reply);
-            } else {
-                await interaction.reply(reply);
+            // Solo responder si la interacción aún no ha sido manejada
+            try {
+                const reply = {
+                    content: '❌ Hubo un error al procesar tu solicitud.',
+                    flags: 64 // Ephemeral flag
+                };
+                
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp(reply).catch(() => {});
+                } else {
+                    await interaction.reply(reply).catch(() => {});
+                }
+            } catch (replyError) {
+                // Si no podemos responder, solo logueamos
+                console.error('No se pudo responder a la interacción:', replyError.message);
             }
         }
     }
