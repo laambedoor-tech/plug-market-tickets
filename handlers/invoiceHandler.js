@@ -167,7 +167,7 @@ class InvoiceHandler {
         const row2 = new ActionRowBuilder().addComponents(accountInput);
         modal.addComponents(row1, row2);
 
-        await interaction.showModal(modal);
+        return interaction.showModal(modal);
     }
 
     static async handleReplaceSubmit(interaction) {
