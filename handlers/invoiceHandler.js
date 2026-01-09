@@ -66,6 +66,9 @@ class InvoiceHandler {
                 try { items = JSON.parse(items); } catch (_) { items = []; }
             }
 
+            // Log para depurar
+            console.log('[invoice_items] Raw items:', JSON.stringify(items, null, 2));
+
             if (!Array.isArray(items) || items.length === 0) {
                 return interaction.editReply({ content: `❌ No hay items en esta orden.` });
             }
@@ -77,41 +80,49 @@ class InvoiceHandler {
                 .setTimestamp();
 
             items.forEach((it, idx) => {
+                console.log(`[invoice_items] Item ${idx}:`, typeof it, JSON.stringify(it));
+                
                 let name, email, password;
                 
+                // Si es un string, parsearlo primero
+                let itemObj = it;
                 if (typeof it === 'string') {
                     try {
-                        const parsed = JSON.parse(it);
-                        name = parsed.plan ?? parsed.name ?? parsed.pid ?? `Item ${idx + 1}`;
-                        // Buscar en credentials primero
-                        if (parsed.credentials && typeof parsed.credentials === 'object') {
-                            email = parsed.credentials.email ?? '—';
-                            password = parsed.credentials.password ?? '—';
-                        } else {
-                            email = parsed.email ?? parsed.account_email ?? '—';
-                            password = parsed.password ?? parsed.account_password ?? '—';
-                        }
+                        itemObj = JSON.parse(it);
+                        console.log(`[invoice_items] Parsed item ${idx}:`, JSON.stringify(itemObj));
+                    } catch (e) {
+                        console.error(`[invoice_items] Failed to parse item ${idx}:`, e);
+                        itemObj = { name: it };
+                    }
+                }
+                
+                // Construir nombre del producto
+                if (itemObj?.pid && itemObj?.plan) {
+                    name = `${itemObj.pid.charAt(0).toUpperCase() + itemObj.pid.slice(1)} ${itemObj.plan}`;
+                } else {
+                    name = itemObj?.name ?? itemObj?.title ?? itemObj?.plan ?? `Item ${idx + 1}`;
+                }
+                
+                // Buscar credenciales en itemObj.credentials primero
+                if (itemObj?.credentials && typeof itemObj.credentials === 'object') {
+                    email = itemObj.credentials.email ?? '—';
+                    password = itemObj.credentials.password ?? '—';
+                    console.log(`[invoice_items] Found credentials in object:`, email, password);
+                } else if (typeof itemObj?.credentials === 'string') {
+                    // Si credentials es un string JSON, parsearlo
+                    try {
+                        const creds = JSON.parse(itemObj.credentials);
+                        email = creds.email ?? '—';
+                        password = creds.password ?? '—';
+                        console.log(`[invoice_items] Parsed credentials from string:`, email, password);
                     } catch {
-                        name = it;
                         email = '—';
                         password = '—';
                     }
                 } else {
-                    // Construir nombre del producto
-                    if (it?.pid && it?.plan) {
-                        name = `${it.pid.charAt(0).toUpperCase() + it.pid.slice(1)} ${it.plan}`;
-                    } else {
-                        name = it?.name ?? it?.title ?? it?.plan ?? `Item ${idx + 1}`;
-                    }
-                    
-                    // Buscar credenciales en it.credentials primero
-                    if (it?.credentials && typeof it.credentials === 'object') {
-                        email = it.credentials.email ?? '—';
-                        password = it.credentials.password ?? '—';
-                    } else {
-                        email = it?.email ?? it?.account_email ?? '—';
-                        password = it?.password ?? it?.account_password ?? '—';
-                    }
+                    email = itemObj?.email ?? itemObj?.account_email ?? '—';
+                    password = itemObj?.password ?? itemObj?.account_password ?? '—';
+                    console.log(`[invoice_items] Using fallback credentials:`, email, password);
                 }
 
                 embed.addFields({
