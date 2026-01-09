@@ -21,26 +21,36 @@ async function fetchInvoiceByOrderId(orderId) {
             Accept: 'application/json'
         };
 
-        // PostgREST ilike usa * como wildcard (no %)
-        // Buscar por prefijo en columna 'id' (UUID: 7b68de05-...)
-        const url = `${supabaseUrl}/rest/v1/${supabaseTable}?id=ilike.${encodeURIComponent(orderId)}*&select=*&limit=1`;
-        console.log(`[invoice] Query Supabase id ilike ${orderId}*`);
+        // Buscar por short_id (primeros 8 caracteres del UUID)
+        let url = `${supabaseUrl}/rest/v1/${supabaseTable}?short_id=eq.${encodeURIComponent(orderId)}&select=*&limit=1`;
+        console.log(`[invoice] Query short_id=${orderId}`);
         
-        const res = await fetchWithTimeout(url, { headers });
-        if (!res.ok) {
-            const errText = await res.text();
-            console.error(`[invoice] Supabase HTTP ${res.status}: ${errText}`);
-            throw new Error(`Supabase error (${res.status}): ${errText}`);
-        }
-        
-        const rows = await res.json();
-        console.log(`[invoice] Supabase response rows: ${rows.length || 0}`);
-        if (Array.isArray(rows) && rows[0]) {
-            console.log(`[invoice] Found order: ${rows[0]?.id}`);
-            return rows[0];
+        let res = await fetchWithTimeout(url, { headers });
+        if (res.ok) {
+            const rows = await res.json();
+            console.log(`[invoice] Found ${rows.length || 0} rows`);
+            if (Array.isArray(rows) && rows[0]) {
+                console.log(`[invoice] Found order: ${rows[0]?.id}`);
+                return rows[0];
+            }
+        } else {
+            console.log(`[invoice] short_id query failed (${res.status}), fallback...`);
         }
 
-        console.log(`[invoice] No order found for prefix ${orderId}`);
+        // Fallback: buscar por UUID completo (si el user pasa el UUID entero)
+        if (orderId.includes('-')) {
+            url = `${supabaseUrl}/rest/v1/${supabaseTable}?id=eq.${encodeURIComponent(orderId)}&select=*&limit=1`;
+            console.log(`[invoice] Query by full UUID`);
+            res = await fetchWithTimeout(url, { headers });
+            if (res.ok) {
+                const rows = await res.json();
+                if (Array.isArray(rows) && rows[0]) {
+                    return rows[0];
+                }
+            }
+        }
+
+        console.log(`[invoice] No order found for ${orderId}`);
         return null;
     }
 
