@@ -87,7 +87,7 @@ function buildInvoiceEmbed(invoice, interaction) {
     );
 
     e.addFields(
-        { name: '🔄 Replace', value: String(replace), inline: true },
+        { name: '<:wheeling:1459207059001315461> Replace', value: String(replace), inline: true },
         { name: '💳 Gateway', value: invoice?.gateway ?? invoice?.payment_gateway ?? 'Unknown', inline: true },
         { name: '📧 Email', value: invoice?.email ?? invoice?.buyer_email ?? invoice?.customer_email ?? 'Unknown', inline: true }
     );
