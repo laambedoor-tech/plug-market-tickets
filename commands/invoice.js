@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const config = require('../config.json');
 
 function fetchWithTimeout(url, options = {}, timeoutMs = 2500) {
@@ -162,9 +162,36 @@ function buildInvoiceEmbed(invoice, interaction) {
     }
 
     e.setFooter({ text: 'Plug Market • Invoice Lookup', iconURL: interaction.client.user.displayAvatarURL() });
-    return e;
-    if (createdAt || completedAt) {
-        const toDiscordTs = ts => {
+    
+    // Botones de acción
+    const seeItemsBtn = new ButtonBuilder()
+        .setCustomId(`invoice_items:${invoiceId}`)
+        .setLabel('See Items')
+        .setStyle(ButtonStyle.Primary)
+        .setEmoji('📦');
+    
+    const markReplaceBtn = new ButtonBuilder()
+        .setCustomId(`invoice_replace:${invoiceId}`)
+        .setLabel('Mark Replace')
+        .setStyle(ButtonStyle.Danger)
+        .setEmoji('🔄');
+    
+    const helpBtn = new ButtonBuilder()
+        .setCustomId('invoice_help')
+        .setLabel('Still Need Help?')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('❓');
+    
+    const reviewBtn = new ButtonBuilder()
+        .setCustomId('invoice_review')
+        .setLabel('Review Us')
+        .setStyle(ButtonStyle.Success)
+        .setEmoji('⭐');
+    
+    const buttonRow = new ActionRowBuilder()
+        .addComponents(seeItemsBtn, markReplaceBtn, helpBtn, reviewBtn);
+    
+    return { embed: e, buttons: buttonRow };
             const d = typeof ts === 'string' ? Date.parse(ts) : ts; 
             const s = Math.floor((typeof d === 'number' ? d : Date.now()) / 1000);
             return `<t:${s}:F>`;
@@ -177,7 +204,36 @@ function buildInvoiceEmbed(invoice, interaction) {
     }
 
     e.setFooter({ text: 'Plug Market • Invoice Lookup', iconURL: interaction.client.user.displayAvatarURL() });
-    return e;
+    
+    // Botones de acción
+    const seeItemsBtn = new ButtonBuilder()
+        .setCustomId(`invoice_items:${invoiceId}`)
+        .setLabel('See Items')
+        .setStyle(ButtonStyle.Primary)
+        .setEmoji('📦');
+    
+    const markReplaceBtn = new ButtonBuilder()
+        .setCustomId(`invoice_replace:${invoiceId}`)
+        .setLabel('Mark Replace')
+        .setStyle(ButtonStyle.Danger)
+        .setEmoji('🔄');
+    
+    const helpBtn = new ButtonBuilder()
+        .setCustomId('invoice_help')
+        .setLabel('Still Need Help?')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('❓');
+    
+    const reviewBtn = new ButtonBuilder()
+        .setCustomId('invoice_review')
+        .setLabel('Review Us')
+        .setStyle(ButtonStyle.Success)
+        .setEmoji('⭐');
+    
+    const buttonRow = new ActionRowBuilder()
+        .addComponents(seeItemsBtn, markReplaceBtn, helpBtn, reviewBtn);
+    
+    return { embed: e, buttons: buttonRow };
 }
 
 module.exports = {
@@ -203,8 +259,8 @@ module.exports = {
                 return interaction.editReply({ content: `❌ No se encontró información para Order ID: ${orderId}` });
             }
 
-            const embed = buildInvoiceEmbed(invoice, interaction);
-            await interaction.editReply({ embeds: [embed] });
+            const invoiceData = buildInvoiceEmbed(invoice, interaction);
+            await interaction.editReply({ embeds: [invoiceData.embed], components: [invoiceData.buttons] });
         } catch (err) {
             console.error('Invoice lookup error:', err);
             const msg = err?.message?.includes('No billing backend configured')

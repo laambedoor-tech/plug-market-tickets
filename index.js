@@ -142,11 +142,17 @@ client.on(Events.InteractionCreate, async interaction => {
     }
     
     // Botones y menús desplegables
-    if (interaction.isButton() || interaction.isStringSelectMenu()) {
+    if (interaction.isButton() || interaction.isStringSelectMenu() || interaction.isModalSubmit()) {
         try {
-            // Importar el manejador de tickets
-            const ticketHandler = require('./handlers/ticketHandler');
-            await ticketHandler.handleInteraction(interaction);
+            // Manejadores de diferentes módulos
+            if (interaction.customId.startsWith('invoice_')) {
+                const invoiceHandler = require('./handlers/invoiceHandler');
+                await invoiceHandler.handleInteraction(interaction);
+            } else {
+                // Importar el manejador de tickets
+                const ticketHandler = require('./handlers/ticketHandler');
+                await ticketHandler.handleInteraction(interaction);
+            }
         } catch (error) {
             console.error('Error manejando interacción:', error);
             
