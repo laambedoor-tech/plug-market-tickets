@@ -1,4 +1,4 @@
-const { EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, InteractionResponseFlags } = require('discord.js');
+const { EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const config = require('../config.json');
 
 async function fetchInvoiceByOrderId(orderId) {
@@ -52,7 +52,7 @@ class InvoiceHandler {
     static async showItems(interaction) {
         const orderId = interaction.customId.split(':')[1];
 
-        await interaction.deferReply({ flags: InteractionResponseFlags.Ephemeral });
+        await interaction.deferReply({ ephemeral: true });
 
         try {
             const invoice = await fetchInvoiceByOrderId(orderId);
@@ -170,7 +170,7 @@ class InvoiceHandler {
         if (!targetUser) {
             return interaction.reply({
                 content: '❌ No se pudo encontrar al usuario.',
-                flags: InteractionResponseFlags.Ephemeral
+                ephemeral: true
             });
         }
 
@@ -191,13 +191,13 @@ class InvoiceHandler {
             await targetUser.send({ embeds: [userEmbed] });
             await interaction.reply({
                 content: `✅ Replacement enviado a ${targetUser.tag}`,
-                flags: InteractionResponseFlags.Ephemeral
+                ephemeral: true
             });
         } catch (err) {
             console.error('Error sending replacement:', err);
             await interaction.reply({
                 content: `❌ Error enviando el mensaje al usuario. ¿Tiene los DMs abiertos?`,
-                flags: InteractionResponseFlags.Ephemeral
+                ephemeral: true
             });
         }
     }

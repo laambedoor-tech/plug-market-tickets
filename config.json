@@ -13,7 +13,7 @@
   "supabaseTable": "orders",
   "invoicesApiUrl": "",
   "colors": {
-    "primary": "#ef476f",
+    "primary": "#9d4edd",
     "secondary": "#c77dff",
     "success": "#06d6a0",
     "error": "#ef476f",
@@ -23,8 +23,7 @@
     "ticket": "🎫",
     "purchases": "🛒",
     "support": "💬",
-    "replace": "<:wheeling:1459207059001315461>",
-    "email": "<:chat:1459209323560435712>",
+    "replace": "🔄",
     "notReceived": "📦",
     "close": "🔒",
     "delete": "🗑️",
