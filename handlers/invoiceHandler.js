@@ -171,6 +171,8 @@ class InvoiceHandler {
     }
 
     static async handleReplaceSubmit(interaction) {
+        await interaction.deferReply({ ephemeral: true });
+
         const [, invoiceId] = interaction.customId.split(':');
         const userId = interaction.fields.getTextInputValue('user_id_field');
         const account = interaction.fields.getTextInputValue('account_field');
@@ -179,9 +181,8 @@ class InvoiceHandler {
         const targetUser = await interaction.client.users.fetch(userId).catch(() => null);
 
         if (!targetUser) {
-            return interaction.reply({
-                content: '❌ No se pudo encontrar al usuario. Verifica que el ID sea correcto.',
-                ephemeral: true
+            return interaction.editReply({
+                content: '❌ No se pudo encontrar al usuario. Verifica que el ID sea correcto.'
             });
         }
 
@@ -200,15 +201,13 @@ class InvoiceHandler {
 
         try {
             await targetUser.send({ embeds: [userEmbed] });
-            await interaction.reply({
-                content: `✅ Replacement enviado a ${targetUser.tag} (${targetUser.id})`,
-                ephemeral: true
+            await interaction.editReply({
+                content: `✅ Replacement enviado a ${targetUser.tag} (${targetUser.id})`
             });
         } catch (err) {
             console.error('Error sending replacement:', err);
-            await interaction.reply({
-                content: `❌ Error enviando el mensaje a ${targetUser.tag}. ¿Tiene los DMs cerrados?`,
-                ephemeral: true
+            await interaction.editReply({
+                content: `❌ Error enviando el mensaje a ${targetUser.tag}. ¿Tiene los DMs cerrados?`
             });
         }
     }
