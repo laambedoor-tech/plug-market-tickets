@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const config = require('../config.json');
+const ALLOWED_CLOSE_ROLES = new Set((config.allowedCloseRoles || []).map(String));
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -133,16 +134,11 @@ module.exports = {
             });
         }
 
-        // Permission check
+        // Permission check (only allow specific roles)
         const member = interaction.member;
-        const hasStaffRole = member.roles.cache.has(config.supportRole) || member.roles.cache.has(config.adminRole);
-        const isTicketOwner = channel.topic && channel.topic.includes(interaction.user.id);
-
-        if (!hasStaffRole && !isTicketOwner && !member.permissions.has(PermissionFlagsBits.ManageChannels)) {
-            return interaction.reply({
-                content: '❌ You do not have permission to close this ticket.',
-                ephemeral: true
-            });
+        const hasAllowedRole = member.roles.cache.some(r => ALLOWED_CLOSE_ROLES.has(String(r.id)));
+        if (!hasAllowedRole) {
+            return interaction.reply({ content: '❌ No tienes permiso para cerrar este ticket.', ephemeral: true });
         }
 
         const reason = interaction.options.getString('reason') || 'Sin razón especificada';

@@ -1,6 +1,8 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSelectMenuBuilder } = require('discord.js');
 const config = require('../config.json');
 
+const ALLOWED_CLOSE_ROLES = new Set((config.allowedCloseRoles || []).map(String));
+
 class TicketHandler {
     static async handleInteraction(interaction) {
         if (interaction.isStringSelectMenu()) {
@@ -18,16 +20,33 @@ class TicketHandler {
         if (interaction.isButton()) {
             switch (interaction.customId) {
                 case 'confirm_close':
+                    if (!TicketHandler.hasClosePermission(interaction.member)) {
+                        await interaction.reply({ content: '❌ No tienes permiso para cerrar tickets.', ephemeral: true });
+                        return;
+                    }
                     await this.confirmClose(interaction);
                     break;
                 case 'cancel_close':
+                    if (!TicketHandler.hasClosePermission(interaction.member)) {
+                        await interaction.reply({ content: '❌ No tienes permiso para gestionar el cierre del ticket.', ephemeral: true });
+                        return;
+                    }
                     await this.cancelClose(interaction);
                     break;
                 case 'delete_ticket':
+                    if (!TicketHandler.hasClosePermission(interaction.member)) {
+                        await interaction.reply({ content: '❌ No tienes permiso para eliminar tickets.', ephemeral: true });
+                        return;
+                    }
                     await this.deleteTicket(interaction);
                     break;
             }
         }
+    }
+
+    static hasClosePermission(member) {
+        if (!member) return false;
+        return member.roles.cache.some(r => ALLOWED_CLOSE_ROLES.has(String(r.id)));
     }
 
     static async createTicket(interaction) {
