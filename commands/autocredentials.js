@@ -233,10 +233,7 @@ module.exports = {
             'Movistar+',
             'DAZN',
             'Steam Accounts',
-            'Crunchyroll',
-            'Canva',
-            'Paramount+',
-            'Apple TV+'
+            'Crunchyroll'
         ];
 
         const filtered = availableProducts
