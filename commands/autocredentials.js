@@ -215,19 +215,28 @@ module.exports = {
         // Lista de productos disponibles
         const availableProducts = [
             'Netflix',
-            'Disney',
-            'Disney+',
-            'Spotify',
-            'HBO',
-            'HBO Max',
-            'Prime Video',
-            'Amazon Prime',
-            'Paramount+',
-            'Apple TV+',
-            'Crunchyroll',
+            'Spotify Premium',
             'YouTube Premium',
+            'Disney+',
+            'Prime Video',
+            'HBO Max',
+            'NordVPN',
+            'Discord Real Server Members',
+            'Discord Nitro',
+            'Discord Nitro Promo Code',
+            'ChatGPT Plus',
+            'ChatGPT Pro',
+            'CapCut Pro',
+            'GeoGuessr',
+            'Wondershare Filmora',
+            'Duolingo',
+            'Movistar+',
+            'DAZN',
+            'Steam Accounts',
+            'Crunchyroll',
             'Canva',
-            'VPN'
+            'Paramount+',
+            'Apple TV+'
         ];
 
         const filtered = availableProducts
