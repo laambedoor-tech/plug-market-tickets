@@ -128,10 +128,7 @@ async function updateOrderReplaced(orderId) {
         
         const updateRes = await fetch(updateUrl, {
             method: 'PATCH',
-            headers: {
-                ...headers,
-                'Prefer': 'return=representation'
-            },
+            headers,
             body: JSON.stringify({ replaced: true })
         });
 
@@ -143,9 +140,27 @@ async function updateOrderReplaced(orderId) {
             return false;
         }
 
-        const updated = await updateRes.json();
-        console.log(`[replace] 🎉 ¡ÉXITO! replaced ahora es: true para orden ${orderId}`);
-        return true;
+        // Verificar que realmente se actualizó
+        console.log(`[replace] 🔍 Verificando que se actualizó...`);
+        const verifyRes = await fetch(searchUrl, { headers });
+        if (verifyRes.ok) {
+            const verifyOrders = await verifyRes.json();
+            if (verifyOrders.length > 0) {
+                const verifiedOrder = verifyOrders[0];
+                console.log(`[replace] 📋 Valor después del UPDATE: replaced = ${verifiedOrder.replaced}`);
+                if (verifiedOrder.replaced === true) {
+                    console.log(`[replace] 🎉 ¡CONFIRMADO! La orden se actualizó correctamente`);
+                    return true;
+                } else {
+                    console.error(`[replace] ❌ ERROR: El UPDATE no cambió el valor. replaced sigue en ${verifiedOrder.replaced}`);
+                    console.error(`[replace] ⚠️ Probablemente hay un problema de permisos RLS en Supabase`);
+                    return false;
+                }
+            }
+        }
+
+        console.log(`[replace] ⚠️ No se pudo verificar, pero el UPDATE devolvió ${updateRes.status}`);
+        return updateRes.status === 200 || updateRes.status === 204;
 
     } catch (error) {
         console.error('[replace] 💥 Exception:', error.message);
