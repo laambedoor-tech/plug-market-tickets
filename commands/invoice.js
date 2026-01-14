@@ -77,7 +77,7 @@ function buildInvoiceEmbed(invoice, interaction) {
 
     // Status, ID, Replace, Email
     const status = 'Completed';
-    const replace = invoice?.replace ?? 'No';
+    const replace = invoice?.replaced ? 'Yes ✅' : 'No ❌';
 
     e.addFields(
         { name: '🔖 Status', value: status, inline: true },
