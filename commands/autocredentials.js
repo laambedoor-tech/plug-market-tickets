@@ -87,9 +87,21 @@ async function updateOrderReplaced(orderId) {
 
         console.log(`[replace] 🔍 Buscando orden: "${orderId}" en tabla: "${ordersTable}"`);
 
-        // Buscar la orden (ambos métodos simultáneamente)
-        const searchUrl = `${supabaseUrl}/rest/v1/${ordersTable}?or=(short_id.eq.${encodeURIComponent(orderId)},id.eq.${encodeURIComponent(orderId)})&select=id,short_id,replaced`;
-        console.log(`[replace] 🌐 URL búsqueda: ${searchUrl}`);
+        let searchUrl;
+        // Verificar si es un UUID (formato: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
+        
+        if (isUUID) {
+            // Si es UUID, buscar por id
+            searchUrl = `${supabaseUrl}/rest/v1/${ordersTable}?id=eq.${encodeURIComponent(orderId)}&select=id,short_id,replaced`;
+            console.log(`[replace] 📝 Buscando por UUID (id)`);
+        } else {
+            // Si no es UUID, buscar por short_id
+            searchUrl = `${supabaseUrl}/rest/v1/${ordersTable}?short_id=eq.${encodeURIComponent(orderId)}&select=id,short_id,replaced`;
+            console.log(`[replace] 📝 Buscando por short_id`);
+        }
+        
+        console.log(`[replace] 🌐 URL: ${searchUrl}`);
         
         const searchRes = await fetch(searchUrl, { headers });
         
@@ -100,8 +112,7 @@ async function updateOrderReplaced(orderId) {
         }
 
         const orders = await searchRes.json();
-        console.log(`[replace] 📦 Resultados encontrados: ${orders.length}`);
-        console.log(`[replace] 📋 Datos:`, JSON.stringify(orders));
+        console.log(`[replace] 📦 Resultados: ${orders.length}`);
 
         if (orders.length === 0) {
             console.warn(`[replace] ❌ Orden NO encontrada: "${orderId}"`);
@@ -113,7 +124,7 @@ async function updateOrderReplaced(orderId) {
 
         // Actualizar con replaced = true
         const updateUrl = `${supabaseUrl}/rest/v1/${ordersTable}?id=eq.${encodeURIComponent(order.id)}`;
-        console.log(`[replace] 🔄 Actualizando URL: ${updateUrl}`);
+        console.log(`[replace] 🔄 Actualizando...`);
         
         const updateRes = await fetch(updateUrl, {
             method: 'PATCH',
@@ -133,13 +144,11 @@ async function updateOrderReplaced(orderId) {
         }
 
         const updated = await updateRes.json();
-        console.log(`[replace] ✅ Orden actualizada exitosamente:`, JSON.stringify(updated));
-        console.log(`[replace] 🎉 replaced ahora es: true`);
+        console.log(`[replace] 🎉 ¡ÉXITO! replaced ahora es: true para orden ${orderId}`);
         return true;
 
     } catch (error) {
         console.error('[replace] 💥 Exception:', error.message);
-        console.error('[replace] Stack:', error.stack);
         return false;
     }
 }
