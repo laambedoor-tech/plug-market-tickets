@@ -73,7 +73,10 @@ async function updateOrderReplaced(orderId) {
     const supabaseKey = config.supabaseKey || process.env.SUPABASE_KEY;
     const ordersTable = config.supabaseTable || 'orders';
 
-    if (!supabaseUrl || !supabaseKey) return false;
+    if (!supabaseUrl || !supabaseKey) {
+        console.warn('[replace] No Supabase credentials configured');
+        return false;
+    }
 
     try {
         const headers = {
@@ -83,49 +86,66 @@ async function updateOrderReplaced(orderId) {
             Prefer: 'return=minimal'
         };
 
+        console.log(`[replace] Buscando orden: ${orderId} en tabla: ${ordersTable}`);
+
         // Buscar por short_id primero
-        let url = `${supabaseUrl}/rest/v1/${ordersTable}?short_id=eq.${encodeURIComponent(orderId)}&select=id`;
+        let url = `${supabaseUrl}/rest/v1/${ordersTable}?short_id=eq.${encodeURIComponent(orderId)}`;
         let res = await fetch(url, { headers });
-        let orderToUpdate = null;
+        let orderData = null;
 
         if (res.ok) {
             const orders = await res.json();
+            console.log(`[replace] short_id search result:`, orders);
             if (orders.length > 0) {
-                orderToUpdate = orders[0].id;
+                orderData = orders[0];
             }
+        } else {
+            console.warn(`[replace] short_id query failed: ${res.status}`);
         }
 
         // Si no encuentra por short_id, buscar por id
-        if (!orderToUpdate) {
-            url = `${supabaseUrl}/rest/v1/${ordersTable}?id=eq.${encodeURIComponent(orderId)}&select=id`;
+        if (!orderData) {
+            url = `${supabaseUrl}/rest/v1/${ordersTable}?id=eq.${encodeURIComponent(orderId)}`;
             res = await fetch(url, { headers });
             if (res.ok) {
                 const orders = await res.json();
+                console.log(`[replace] id search result:`, orders);
                 if (orders.length > 0) {
-                    orderToUpdate = orders[0].id;
+                    orderData = orders[0];
                 }
             }
         }
 
-        if (!orderToUpdate) {
-            console.warn('[replace] Order not found:', orderId);
+        if (!orderData) {
+            console.warn(`[replace] Order not found: ${orderId}`);
             return false;
         }
 
+        console.log(`[replace] Found order:`, orderData.id || orderData.short_id);
+
         // Actualizar con replaced = true
-        url = `${supabaseUrl}/rest/v1/${ordersTable}?id=eq.${orderToUpdate}`;
+        url = `${supabaseUrl}/rest/v1/${ordersTable}?id=eq.${encodeURIComponent(orderData.id)}`;
+        console.log(`[replace] Actualizando URL:`, url);
+        
         res = await fetch(url, {
             method: 'PATCH',
             headers,
             body: JSON.stringify({ replaced: true })
         });
 
-        if (res.ok) {
-            console.log('[replace] Order updated with replaced=true:', orderId);
-            return true;
+        console.log(`[replace] Update response status: ${res.status}`);
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error(`[replace] Update failed: ${res.status} - ${errorText}`);
+            return false;
         }
+
+        console.log(`[replace] ✅ Order ${orderId} updated to replaced=true`);
+        return true;
+
     } catch (error) {
-        console.error('[replace] Error updating order:', error);
+        console.error('[replace] Exception updating order:', error);
     }
 
     return false;
