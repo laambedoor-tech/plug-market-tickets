@@ -74,7 +74,7 @@ async function updateOrderReplaced(orderId) {
     const ordersTable = config.supabaseTable || 'orders';
 
     if (!supabaseUrl || !supabaseKey) {
-        console.warn('[replace] No Supabase credentials configured');
+        console.warn('[replace] ❌ No Supabase credentials');
         return false;
     }
 
@@ -82,73 +82,66 @@ async function updateOrderReplaced(orderId) {
         const headers = {
             apikey: supabaseKey,
             Authorization: `Bearer ${supabaseKey}`,
-            'Content-Type': 'application/json',
-            Prefer: 'return=minimal'
+            'Content-Type': 'application/json'
         };
 
-        console.log(`[replace] Buscando orden: ${orderId} en tabla: ${ordersTable}`);
+        console.log(`[replace] 🔍 Buscando orden: "${orderId}" en tabla: "${ordersTable}"`);
 
-        // Buscar por short_id primero
-        let url = `${supabaseUrl}/rest/v1/${ordersTable}?short_id=eq.${encodeURIComponent(orderId)}`;
-        let res = await fetch(url, { headers });
-        let orderData = null;
-
-        if (res.ok) {
-            const orders = await res.json();
-            console.log(`[replace] short_id search result:`, orders);
-            if (orders.length > 0) {
-                orderData = orders[0];
-            }
-        } else {
-            console.warn(`[replace] short_id query failed: ${res.status}`);
-        }
-
-        // Si no encuentra por short_id, buscar por id
-        if (!orderData) {
-            url = `${supabaseUrl}/rest/v1/${ordersTable}?id=eq.${encodeURIComponent(orderId)}`;
-            res = await fetch(url, { headers });
-            if (res.ok) {
-                const orders = await res.json();
-                console.log(`[replace] id search result:`, orders);
-                if (orders.length > 0) {
-                    orderData = orders[0];
-                }
-            }
-        }
-
-        if (!orderData) {
-            console.warn(`[replace] Order not found: ${orderId}`);
+        // Buscar la orden (ambos métodos simultáneamente)
+        const searchUrl = `${supabaseUrl}/rest/v1/${ordersTable}?or=(short_id.eq.${encodeURIComponent(orderId)},id.eq.${encodeURIComponent(orderId)})&select=id,short_id,replaced`;
+        console.log(`[replace] 🌐 URL búsqueda: ${searchUrl}`);
+        
+        const searchRes = await fetch(searchUrl, { headers });
+        
+        if (!searchRes.ok) {
+            const errorText = await searchRes.text();
+            console.error(`[replace] ❌ Búsqueda falló: ${searchRes.status} - ${errorText}`);
             return false;
         }
 
-        console.log(`[replace] Found order:`, orderData.id || orderData.short_id);
+        const orders = await searchRes.json();
+        console.log(`[replace] 📦 Resultados encontrados: ${orders.length}`);
+        console.log(`[replace] 📋 Datos:`, JSON.stringify(orders));
+
+        if (orders.length === 0) {
+            console.warn(`[replace] ❌ Orden NO encontrada: "${orderId}"`);
+            return false;
+        }
+
+        const order = orders[0];
+        console.log(`[replace] ✅ Orden encontrada - ID: ${order.id}, short_id: ${order.short_id}, replaced actual: ${order.replaced}`);
 
         // Actualizar con replaced = true
-        url = `${supabaseUrl}/rest/v1/${ordersTable}?id=eq.${encodeURIComponent(orderData.id)}`;
-        console.log(`[replace] Actualizando URL:`, url);
+        const updateUrl = `${supabaseUrl}/rest/v1/${ordersTable}?id=eq.${encodeURIComponent(order.id)}`;
+        console.log(`[replace] 🔄 Actualizando URL: ${updateUrl}`);
         
-        res = await fetch(url, {
+        const updateRes = await fetch(updateUrl, {
             method: 'PATCH',
-            headers,
+            headers: {
+                ...headers,
+                'Prefer': 'return=representation'
+            },
             body: JSON.stringify({ replaced: true })
         });
 
-        console.log(`[replace] Update response status: ${res.status}`);
+        console.log(`[replace] 📡 Update status: ${updateRes.status}`);
 
-        if (!res.ok) {
-            const errorText = await res.text();
-            console.error(`[replace] Update failed: ${res.status} - ${errorText}`);
+        if (!updateRes.ok) {
+            const errorText = await updateRes.text();
+            console.error(`[replace] ❌ Update falló: ${updateRes.status} - ${errorText}`);
             return false;
         }
 
-        console.log(`[replace] ✅ Order ${orderId} updated to replaced=true`);
+        const updated = await updateRes.json();
+        console.log(`[replace] ✅ Orden actualizada exitosamente:`, JSON.stringify(updated));
+        console.log(`[replace] 🎉 replaced ahora es: true`);
         return true;
 
     } catch (error) {
-        console.error('[replace] Exception updating order:', error);
+        console.error('[replace] 💥 Exception:', error.message);
+        console.error('[replace] Stack:', error.stack);
+        return false;
     }
-
-    return false;
 }
 
 // ========================================
