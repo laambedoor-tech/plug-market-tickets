@@ -59,6 +59,7 @@ typings/
 
 # Config file with sensitive data
 config.json
+config-production.js
 
 # VS Code settings
 .vscode/
