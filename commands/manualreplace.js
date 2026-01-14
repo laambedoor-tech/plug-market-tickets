@@ -3,8 +3,8 @@ const config = require('../config.json');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('replace')
-        .setDescription('🔄 Enviar replacement de una orden al cliente')
+        .setName('manualreplace')
+        .setDescription('🔄 Enviar replacement manual de una orden al cliente')
         .addStringOption(opt =>
             opt
                 .setName('order_id')

@@ -11,6 +11,7 @@
   "supabaseUrl": "https://twewcjgphqunpjchwliv.supabase.co",
   "supabaseKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3ZXdjamdwaHF1bnBqY2h3bGl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzNjQwNDksImV4cCI6MjA3Nzk0MDA0OX0.GTIQg6CRy9h1RZElisKFWG-3Cqup2KqrDxxSwLk105s",
   "supabaseTable": "orders",
+  "credentialsTable": "credentials",
   "invoicesApiUrl": "",
   "colors": {
     "primary": "#ef476f",
