@@ -38,7 +38,7 @@ module.exports = {
             if (!duracionMs) {
                 return interaction.reply({
                     content: '❌ Invalid duration format. Use: 1h, 30m, 2d, 1w (minutes=m, hours=h, days=d, weeks=w)',
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
@@ -50,7 +50,7 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setTitle(`🎁 ${premio}`)
                 .setDescription(
-                    `🎉 **Ends:** en ${formatDuracion(duracionMs)} | 👑 **Host:** ${interaction.user}\n` +
+                    `🎉 **Ends:** in ${formatDuracion(duracionMs)} | 👑 **Host:** ${interaction.user}\n` +
                     `🏆 **Winners:** 1\n\n` +
                     `*Click the button below to secure your entry!*`
                 )
@@ -101,14 +101,14 @@ module.exports = {
 
             await interaction.reply({
                 content: `✅ Giveaway created successfully in ${interaction.channel}`,
-                ephemeral: true
+                flags: 64
             });
 
         } catch (error) {
             console.error('Error creating giveaway:', error);
             await interaction.reply({
                 content: '❌ There was an error creating the giveaway.',
-                ephemeral: true
+                flags: 64
             }).catch(() => {});
         }
     }
@@ -242,7 +242,7 @@ module.exports.handleGiveawayButton = async function(interaction) {
     if (!giveawayData || !giveawayData.activo) {
         return interaction.reply({
             content: '❌ This giveaway is no longer active.',
-            ephemeral: true
+            flags: 64
         });
     }
     
@@ -250,7 +250,7 @@ module.exports.handleGiveawayButton = async function(interaction) {
     if (giveawayData.participantes.includes(userId)) {
         return interaction.reply({
             content: '⚠️ You are already participating in this giveaway.',
-            ephemeral: true
+            flags: 64
         });
     }
     
@@ -264,7 +264,7 @@ module.exports.handleGiveawayButton = async function(interaction) {
     
     const embedActualizado = EmbedBuilder.from(embed)
         .setDescription(
-            `🎉 **Ends:** en ${formatDuracion(duracionRestante)} | 👑 **Host:** <@${giveawayData.hostId}>\n` +
+            `🎉 **Ends:** in ${formatDuracion(duracionRestante)} | 👑 **Host:** <@${giveawayData.hostId}>\n` +
             `🏆 **Winners:** ${giveawayData.ganadores}\n\n` +
             `*Click the button below to secure your entry!*`
         );
@@ -273,6 +273,6 @@ module.exports.handleGiveawayButton = async function(interaction) {
     
     await interaction.reply({
         content: '✅ You have successfully entered the giveaway!',
-        ephemeral: true
+        flags: 64
     });
 };

@@ -17,7 +17,7 @@ module.exports = {
         const giveaways = interaction.client.giveaways;
 
         if (!giveaways || giveaways.size === 0) {
-            return interaction.reply({ content: '⚠️ No tracked giveaways right now. If there is an active giveaway, the bot may have been restarted.', ephemeral: true });
+            return interaction.reply({ content: '⚠️ No tracked giveaways right now. If there is an active giveaway, the bot may have been restarted.', flags: 64 });
         }
 
         let giveawayData;
@@ -25,12 +25,12 @@ module.exports = {
         if (messageIdInput) {
             giveawayData = giveaways.get(messageIdInput.trim());
             if (!giveawayData) {
-                return interaction.reply({ content: '❌ No giveaway found with that message ID.', ephemeral: true });
+                return interaction.reply({ content: '❌ No giveaway found with that message ID.', flags: 64 });
             }
         } else {
             const activeInGuild = [...giveaways.values()].filter(g => g.guildId === interaction.guild.id && g.activo);
             if (activeInGuild.length === 0) {
-                return interaction.reply({ content: '⚠️ No active giveaways found in this server. Provide a message_id if it exists.', ephemeral: true });
+                return interaction.reply({ content: '⚠️ No active giveaways found in this server. Provide a message_id if it exists.', flags: 64 });
             }
             // Pick the one that ends soonest
             activeInGuild.sort((a, b) => a.finaliza - b.finaliza);
@@ -38,7 +38,7 @@ module.exports = {
         }
 
         if (giveawayData.guildId !== interaction.guild.id) {
-            return interaction.reply({ content: '❌ That giveaway does not belong to this server.', ephemeral: true });
+            return interaction.reply({ content: '❌ That giveaway does not belong to this server.', flags: 64 });
         }
 
         const participantes = giveawayData.participantes || [];
@@ -60,6 +60,6 @@ module.exports = {
             )
             .setColor('#9d4edd');
 
-        return interaction.reply({ embeds: [embed], ephemeral: true });
+        return interaction.reply({ embeds: [embed], flags: 64 });
     }
 };
