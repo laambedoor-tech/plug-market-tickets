@@ -1,4 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -27,8 +29,6 @@ module.exports = {
             });
         }
 
-        await interaction.deferReply({ ephemeral: true });
-
         try {
             const premio = interaction.options.getString('prize');
             const duracionStr = interaction.options.getString('duration');
@@ -36,8 +36,9 @@ module.exports = {
             // Parsear duración
             const duracionMs = parseDuracion(duracionStr);
             if (!duracionMs) {
-                return interaction.editReply({
-                    content: '❌ Invalid duration format. Use: 1h, 30m, 2d, 1w (minutes=m, hours=h, days=d, weeks=w)'
+                return interaction.reply({
+                    content: '❌ Invalid duration format. Use: 1h, 30m, 2d, 1w (minutes=m, hours=h, days=d, weeks=w)',
+                    ephemeral: true
                 });
             }
 
@@ -86,26 +87,29 @@ module.exports = {
                 activo: true
             };
 
-            // Guardar en memoria (puedes implementar persistencia con base de datos)
+            // Guardar en memoria y archivo
             if (!interaction.client.giveaways) {
                 interaction.client.giveaways = new Map();
             }
             interaction.client.giveaways.set(giveawayMessage.id, giveawayData);
+            saveGiveaways(interaction.client.giveaways);
 
             // Programar finalización del giveaway
             setTimeout(async () => {
                 await finalizarGiveaway(interaction.client, giveawayData);
             }, duracionMs);
 
-            await interaction.editReply({
-                content: `✅ Giveaway created successfully in ${interaction.channel}`
+            await interaction.reply({
+                content: `✅ Giveaway created successfully in ${interaction.channel}`,
+                ephemeral: true
             });
 
         } catch (error) {
             console.error('Error creating giveaway:', error);
-            await interaction.editReply({
-                content: '❌ There was an error creating the giveaway.'
-            });
+            await interaction.reply({
+                content: '❌ There was an error creating the giveaway.',
+                ephemeral: true
+            }).catch(() => {});
         }
     }
 };
@@ -193,11 +197,39 @@ async function finalizarGiveaway(client, giveawayData) {
         
         // Marcar como inactivo
         giveawayData.activo = false;
+        saveGiveaways(client.giveaways);
         
     } catch (error) {
         console.error('Error finalizing giveaway:', error);
     }
 }
+
+// Funciones de persistencia
+function saveGiveaways(giveawaysMap) {
+    try {
+        const filePath = path.join(__dirname, '..', 'giveaways.json');
+        const data = Array.from(giveawaysMap.entries());
+        fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    } catch (error) {
+        console.error('Error saving giveaways:', error);
+    }
+}
+
+function loadGiveaways() {
+    try {
+        const filePath = path.join(__dirname, '..', 'giveaways.json');
+        if (!fs.existsSync(filePath)) return new Map();
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        return new Map(data);
+    } catch (error) {
+        console.error('Error loading giveaways:', error);
+        return new Map();
+    }
+}
+
+module.exports.loadGiveaways = loadGiveaways;
+module.exports.saveGiveaways = saveGiveaways;
+module.exports.finalizarGiveaway = finalizarGiveaway;
 
 // Exportar funciones auxiliares
 module.exports.handleGiveawayButton = async function(interaction) {
@@ -224,6 +256,7 @@ module.exports.handleGiveawayButton = async function(interaction) {
     
     // Agregar participante
     giveawayData.participantes.push(userId);
+    saveGiveaways(interaction.client.giveaways);
     
     // Actualizar embed (sin mostrar lista de participantes)
     const embed = interaction.message.embeds[0];

@@ -25,6 +25,22 @@ client.commands = new Collection();
 // Inicializar Map de giveaways
 client.giveaways = new Map();
 
+// Cargar giveaways guardados
+const giveawayCommand = require('./commands/giveaway');
+if (giveawayCommand.loadGiveaways) {
+    client.giveaways = giveawayCommand.loadGiveaways();
+    // Restaurar timeouts para giveaways activos
+    for (const [messageId, giveawayData] of client.giveaways.entries()) {
+        if (giveawayData.activo && giveawayData.finaliza > Date.now()) {
+            const tiempoRestante = giveawayData.finaliza - Date.now();
+            setTimeout(async () => {
+                await giveawayCommand.finalizarGiveaway(client, giveawayData);
+            }, tiempoRestante);
+        }
+    }
+    console.log(`📦 Cargados ${client.giveaways.size} giveaway(s) desde archivo`);
+}
+
 // Cargar comandos
 const commandsPath = path.join(__dirname, 'commands');
 if (fs.existsSync(commandsPath)) {
