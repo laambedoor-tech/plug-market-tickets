@@ -135,70 +135,36 @@ client.on(Events.MessageCreate, async message => {
 
 // Manejar interacciones
 client.on(Events.InteractionCreate, async interaction => {
-    // IMMEDIATELY acknowledge to prevent timeout
-    if (!interaction.isButton() && !interaction.isStringSelectMenu() && !interaction.isModalSubmit()) {
-        // For slash commands, defer immediately
-        await interaction.deferReply({ flags: 64 }).catch(() => {});
-    }
-    
-    // Comandos slash
-    if (interaction.isChatInputCommand()) {
-        const command = client.commands.get(interaction.commandName);
-
-        if (!command) {
-            console.error(`No se encontró el comando ${interaction.commandName}.`);
-            return;
-        }
-
-        try {
-            await command.execute(interaction);
-        } catch (error) {
-            console.error(`Error ejecutando ${interaction.commandName}:`, error);
-            
-            const reply = {
-                content: '❌ Hubo un error al ejecutar este comando.',
-                flags: 64 // Ephemeral
-            };
-            
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(reply).catch(() => {});
-            } else {
-                await interaction.reply(reply).catch(() => {});
-            }
-        }
-    }
-    
-    // Botones y menús desplegables
-    if (interaction.isButton() || interaction.isStringSelectMenu() || interaction.isModalSubmit()) {
-        try {
-            // Defer button interactions immediately
-            await interaction.deferReply({ flags: 64 }).catch(() => {});
-            
-            // Manejadores de diferentes módulos
-            if (interaction.customId.startsWith('giveaway_join_')) {
-                const giveawayCommand = require('./commands/giveaway');
-                await giveawayCommand.handleGiveawayButton(interaction);
-            } else if (interaction.customId.startsWith('invoice_')) {
-                const invoiceHandler = require('./handlers/invoiceHandler');
-                await invoiceHandler.handleInteraction(interaction);
-            } else {
-                // Importar el manejador de tickets
-                const ticketHandler = require('./handlers/ticketHandler');
-                await ticketHandler.handleInteraction(interaction);
-            }
-        } catch (error) {
-            console.error('Error manejando interacción:', error);
-            
-            // No responder si el error es de interacción ya respondida
-            if (error.code === 40060) {
+    try {
+        // IMMEDIATELY acknowledge to prevent timeout
+        if (!interaction.isButton() && !interaction.isStringSelectMenu() && !interaction.isModalSubmit()) {
+            // For slash commands, defer immediately
+            try {
+                await interaction.deferReply({ flags: 64 });
+            } catch (deferError) {
+                // If defer fails, something is seriously wrong, exit
+                console.error('Failed to defer slash command:', deferError);
                 return;
             }
-            
-            // Solo responder si la interacción aún no ha sido manejada
+        }
+        
+        // Comandos slash
+        if (interaction.isChatInputCommand()) {
+            const command = client.commands.get(interaction.commandName);
+
+            if (!command) {
+                console.error(`No se encontró el comando ${interaction.commandName}.`);
+                return;
+            }
+
             try {
+                await command.execute(interaction);
+            } catch (error) {
+                console.error(`Error ejecutando ${interaction.commandName}:`, error);
+                
                 const reply = {
-                    content: '❌ Hubo un error al procesar tu solicitud.',
-                    flags: 64 // Ephemeral flag
+                    content: '❌ Hubo un error al ejecutar este comando.',
+                    flags: 64 // Ephemeral
                 };
                 
                 if (interaction.replied || interaction.deferred) {
@@ -206,11 +172,61 @@ client.on(Events.InteractionCreate, async interaction => {
                 } else {
                     await interaction.reply(reply).catch(() => {});
                 }
-            } catch (replyError) {
-                // Si no podemos responder, solo logueamos
-                console.error('No se pudo responder a la interacción:', replyError.message);
             }
         }
+        
+        // Botones y menús desplegables
+        if (interaction.isButton() || interaction.isStringSelectMenu() || interaction.isModalSubmit()) {
+            // Defer button interactions immediately
+            try {
+                await interaction.deferReply({ flags: 64 });
+            } catch (deferError) {
+                // If defer fails, exit
+                console.error('Failed to defer interaction:', deferError);
+                return;
+            }
+            
+            try {
+                // Manejadores de diferentes módulos
+                if (interaction.customId.startsWith('giveaway_join_')) {
+                    const giveawayCommand = require('./commands/giveaway');
+                    await giveawayCommand.handleGiveawayButton(interaction);
+                } else if (interaction.customId.startsWith('invoice_')) {
+                    const invoiceHandler = require('./handlers/invoiceHandler');
+                    await invoiceHandler.handleInteraction(interaction);
+                } else {
+                    // Importar el manejador de tickets
+                    const ticketHandler = require('./handlers/ticketHandler');
+                    await ticketHandler.handleInteraction(interaction);
+                }
+            } catch (error) {
+                console.error('Error manejando interacción:', error);
+                
+                // No responder si el error es de interacción ya respondida
+                if (error.code === 40060) {
+                    return;
+                }
+                
+                // Solo responder si la interacción aún no ha sido manejada
+                try {
+                    const reply = {
+                        content: '❌ Hubo un error al procesar tu solicitud.',
+                        flags: 64 // Ephemeral flag
+                    };
+                    
+                    if (interaction.replied || interaction.deferred) {
+                        await interaction.followUp(reply).catch(() => {});
+                    } else {
+                        await interaction.reply(reply).catch(() => {});
+                    }
+                } catch (replyError) {
+                    // Si no podemos responder, solo logueamos
+                    console.error('No se pudo responder a la interacción:', replyError.message);
+                }
+            }
+        }
+    } catch (globalError) {
+        console.error('Global interaction error:', globalError);
     }
 });
 
