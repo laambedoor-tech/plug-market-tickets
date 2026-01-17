@@ -151,6 +151,9 @@ client.on(Events.InteractionCreate, async interaction => {
             if (interaction.customId.startsWith('giveaway_join_')) {
                 const giveawayCommand = require('./commands/giveaway');
                 await giveawayCommand.handleGiveawayButton(interaction);
+            } else if (interaction.customId.startsWith('product:')) {
+                const productHandler = require('./handlers/productHandler');
+                await productHandler.handleInteraction(interaction);
             } else if (interaction.customId.startsWith('invoice_')) {
                 const invoiceHandler = require('./handlers/invoiceHandler');
                 await invoiceHandler.handleInteraction(interaction);
