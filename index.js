@@ -58,7 +58,8 @@ if (fs.existsSync(commandsPath)) {
     }
 }
 
-// Cargar eventos
+// Cargar eventos (deshabilitado - eventos manejados directamente en index.js)
+/*
 const eventsPath = path.join(__dirname, 'events');
 if (fs.existsSync(eventsPath)) {
     const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
@@ -74,6 +75,7 @@ if (fs.existsSync(eventsPath)) {
         }
     }
 }
+*/
 
 // Evento ready
 client.once(Events.ClientReady, () => {
@@ -177,6 +179,11 @@ client.on(Events.InteractionCreate, async interaction => {
             }
         } catch (error) {
             console.error('Error manejando interacción:', error);
+            
+            // No responder si el error es de interacción ya respondida
+            if (error.code === 40060) {
+                return;
+            }
             
             // Solo responder si la interacción aún no ha sido manejada
             try {

@@ -25,20 +25,21 @@ module.exports = {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageEvents)) {
             return interaction.reply({
                 content: '❌ You don\'t have permission to use this command.',
-                ephemeral: true
+                flags: 64
             });
         }
 
         try {
+            // Defer reply para no perder la interacción
+            await interaction.deferReply({ flags: 64 });
             const premio = interaction.options.getString('prize');
             const duracionStr = interaction.options.getString('duration');
 
             // Parsear duración
             const duracionMs = parseDuracion(duracionStr);
             if (!duracionMs) {
-                return interaction.reply({
-                    content: '❌ Invalid duration format. Use: 1h, 30m, 2d, 1w (minutes=m, hours=h, days=d, weeks=w)',
-                    flags: 64
+                return interaction.editReply({
+                    content: '❌ Invalid duration format. Use: 1h, 30m, 2d, 1w (minutes=m, hours=h, days=d, weeks=w)'
                 });
             }
 
@@ -99,16 +100,14 @@ module.exports = {
                 await finalizarGiveaway(interaction.client, giveawayData);
             }, duracionMs);
 
-            await interaction.reply({
-                content: `✅ Giveaway created successfully in ${interaction.channel}`,
-                flags: 64
+            await interaction.editReply({
+                content: `✅ Giveaway created successfully in ${interaction.channel}`
             });
 
         } catch (error) {
             console.error('Error creating giveaway:', error);
-            await interaction.reply({
-                content: '❌ There was an error creating the giveaway.',
-                flags: 64
+            await interaction.editReply({
+                content: '❌ There was an error creating the giveaway.'
             }).catch(() => {});
         }
     }
@@ -239,18 +238,19 @@ module.exports.handleGiveawayButton = async function(interaction) {
     // Obtener datos del giveaway
     const giveawayData = interaction.client.giveaways?.get(messageId);
     
+    // Defer la respuesta
+    await interaction.deferReply({ flags: 64 }).catch(() => {});
+    
     if (!giveawayData || !giveawayData.activo) {
-        return interaction.reply({
-            content: '❌ This giveaway is no longer active.',
-            flags: 64
+        return interaction.editReply({
+            content: '❌ This giveaway is no longer active.'
         });
     }
     
     // Verificar si ya está participando
     if (giveawayData.participantes.includes(userId)) {
-        return interaction.reply({
-            content: '⚠️ You are already participating in this giveaway.',
-            flags: 64
+        return interaction.editReply({
+            content: '⚠️ You are already participating in this giveaway.'
         });
     }
     
@@ -271,8 +271,7 @@ module.exports.handleGiveawayButton = async function(interaction) {
     
     await interaction.message.edit({ embeds: [embedActualizado] });
     
-    await interaction.reply({
-        content: '✅ You have successfully entered the giveaway!',
-        flags: 64
+    await interaction.editReply({
+        content: '✅ You have successfully entered the giveaway!'
     });
 };
