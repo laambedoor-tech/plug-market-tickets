@@ -50,7 +50,7 @@ module.exports = {
                 .setTitle(`🎁 ${premio}`)
                 .setDescription(
                     `🎉 **Ends:** hace ${formatDuracion(duracionMs)} | 👑 **Host:** ${interaction.user}\n` +
-                    `📊 **Entries:** 0 | 🏆 **Count:** 1\n\n` +
+                    `🏆 **Winners:** 1\n\n` +
                     `*Click the button below to secure your entry!*`
                 )
                 .setColor('#9d4edd')
@@ -232,7 +232,7 @@ module.exports.handleGiveawayButton = async function(interaction) {
     const embedActualizado = EmbedBuilder.from(embed)
         .setDescription(
             `🎉 **Ends:** hace ${formatDuracion(duracionRestante)} | 👑 **Host:** <@${giveawayData.hostId}>\n` +
-            `📊 **Entries:** ${giveawayData.participantes.length} | 🏆 **Count:** 1\n\n` +
+            `🏆 **Winners:** ${giveawayData.ganadores}\n\n` +
             `*Click the button below to secure your entry!*`
         );
     
