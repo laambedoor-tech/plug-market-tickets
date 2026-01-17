@@ -192,7 +192,7 @@ module.exports = {
         .addStringOption(opt =>
             opt
                 .setName('product')
-                .setDescription('Nombre del producto (Netflix, Disney, Spotify, HBO, Prime, etc.)')
+                .setDescription('Selecciona el producto')
                 .setRequired(true)
                 .setAutocomplete(true)
         )

@@ -22,6 +22,9 @@ const client = new Client({
 // Colección de comandos
 client.commands = new Collection();
 
+// Inicializar Map de giveaways
+client.giveaways = new Map();
+
 // Cargar comandos
 const commandsPath = path.join(__dirname, 'commands');
 if (fs.existsSync(commandsPath)) {
@@ -145,7 +148,10 @@ client.on(Events.InteractionCreate, async interaction => {
     if (interaction.isButton() || interaction.isStringSelectMenu() || interaction.isModalSubmit()) {
         try {
             // Manejadores de diferentes módulos
-            if (interaction.customId.startsWith('invoice_')) {
+            if (interaction.customId.startsWith('giveaway_join_')) {
+                const giveawayCommand = require('./commands/giveaway');
+                await giveawayCommand.handleGiveawayButton(interaction);
+            } else if (interaction.customId.startsWith('invoice_')) {
                 const invoiceHandler = require('./handlers/invoiceHandler');
                 await invoiceHandler.handleInteraction(interaction);
             } else {
