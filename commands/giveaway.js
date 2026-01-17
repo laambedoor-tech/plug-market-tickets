@@ -52,17 +52,7 @@ function loadGiveaways() {
 async function finalizarGiveaway(client, giveawayData) {
     try {
         const channel = await client.channels.fetch(giveawayData.channelId);
-        let message = null;
-        
-        try {
-            message = await channel.messages.fetch(giveawayData.messageId);
-        } catch (fetchError) {
-            // Message doesn't exist or was deleted
-            console.log(`Giveaway message ${giveawayData.messageId} not found, marking giveaway as inactive.`);
-            giveawayData.activo = false;
-            saveGiveaways(client.giveaways);
-            return;
-        }
+        const message = await channel.messages.fetch(giveawayData.messageId);
         
         const participantes = giveawayData.participantes || [];
         let descripcion;
@@ -106,13 +96,6 @@ async function finalizarGiveaway(client, giveawayData) {
         saveGiveaways(client.giveaways);
     } catch (error) {
         console.error('Error finalizing giveaway:', error);
-        // Still mark as inactive even on error
-        giveawayData.activo = false;
-        try {
-            saveGiveaways(client.giveaways);
-        } catch (saveError) {
-            console.error('Error saving giveaway after finalization error:', saveError);
-        }
     }
 }
 
@@ -223,16 +206,14 @@ module.exports = {
             const giveawayData = interaction.client.giveaways?.get(messageId);
 
             if (!giveawayData || !giveawayData.activo) {
-                return interaction.reply({
-                    content: '❌ This giveaway is no longer active.',
-                    flags: 64
+                return interaction.editReply({
+                    content: '❌ This giveaway is no longer active.'
                 });
             }
 
             if (giveawayData.participantes.includes(userId)) {
-                return interaction.reply({
-                    content: '⚠️ You are already participating in this giveaway.',
-                    flags: 64
+                return interaction.editReply({
+                    content: '⚠️ You are already participating in this giveaway.'
                 });
             }
 
@@ -251,16 +232,14 @@ module.exports = {
 
             await interaction.message.edit({ embeds: [embedActualizado] });
 
-            await interaction.reply({
-                content: '✅ You have successfully entered the giveaway!',
-                flags: 64
+            await interaction.editReply({
+                content: '✅ You have successfully entered the giveaway!'
             });
 
         } catch (error) {
             console.error('Error in handleGiveawayButton:', error);
-            await interaction.reply({
-                content: '❌ Error joining giveaway',
-                flags: 64
+            await interaction.editReply({
+                content: '❌ Error joining giveaway'
             }).catch(() => {});
         }
     }

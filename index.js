@@ -137,8 +137,8 @@ client.on(Events.MessageCreate, async message => {
 client.on(Events.InteractionCreate, async interaction => {
     // IMMEDIATELY acknowledge to prevent timeout
     if (!interaction.isButton() && !interaction.isStringSelectMenu() && !interaction.isModalSubmit()) {
-        // For slash commands, defer but don't await yet
-        interaction.deferReply({ flags: 64 }).catch(() => {});
+        // For slash commands, defer immediately
+        await interaction.deferReply({ flags: 64 }).catch(() => {});
     }
     
     // Comandos slash
@@ -171,6 +171,9 @@ client.on(Events.InteractionCreate, async interaction => {
     // Botones y menús desplegables
     if (interaction.isButton() || interaction.isStringSelectMenu() || interaction.isModalSubmit()) {
         try {
+            // Defer button interactions immediately
+            await interaction.deferReply({ flags: 64 }).catch(() => {});
+            
             // Manejadores de diferentes módulos
             if (interaction.customId.startsWith('giveaway_join_')) {
                 const giveawayCommand = require('./commands/giveaway');
