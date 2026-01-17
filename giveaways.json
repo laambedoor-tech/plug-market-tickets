@@ -1,13 +1,27 @@
 [
   [
-    "1462226433752563784",
+    "1462228695165960203",
     {
-      "messageId": "1462226433752563784",
+      "messageId": "1462228695165960203",
       "channelId": "1458547614608916521",
       "guildId": "1434533421266505778",
-      "premio": "iniopo",
+      "premio": "iono",
       "hostId": "442385253525618699",
-      "finaliza": 1768692661803,
+      "finaliza": 1768693141014,
+      "participantes": [],
+      "ganadores": 1,
+      "activo": true
+    }
+  ],
+  [
+    "1462228937110327379",
+    {
+      "messageId": "1462228937110327379",
+      "channelId": "1434535909289627770",
+      "guildId": "1434533421266505778",
+      "premio": "Nitro Boost 1M",
+      "hostId": "442385253525618699",
+      "finaliza": 1768797298608,
       "participantes": [],
       "ganadores": 1,
       "activo": true

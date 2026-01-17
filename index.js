@@ -135,6 +135,12 @@ client.on(Events.MessageCreate, async message => {
 
 // Manejar interacciones
 client.on(Events.InteractionCreate, async interaction => {
+    // IMMEDIATELY acknowledge to prevent timeout
+    if (!interaction.isButton() && !interaction.isStringSelectMenu() && !interaction.isModalSubmit()) {
+        // For slash commands, defer but don't await yet
+        interaction.deferReply({ flags: 64 }).catch(() => {});
+    }
+    
     // Comandos slash
     if (interaction.isChatInputCommand()) {
         const command = client.commands.get(interaction.commandName);
