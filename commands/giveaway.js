@@ -52,7 +52,17 @@ function loadGiveaways() {
 async function finalizarGiveaway(client, giveawayData) {
     try {
         const channel = await client.channels.fetch(giveawayData.channelId);
-        const message = await channel.messages.fetch(giveawayData.messageId);
+        let message = null;
+        
+        try {
+            message = await channel.messages.fetch(giveawayData.messageId);
+        } catch (fetchError) {
+            // Message doesn't exist or was deleted
+            console.log(`Giveaway message ${giveawayData.messageId} not found, marking giveaway as inactive.`);
+            giveawayData.activo = false;
+            saveGiveaways(client.giveaways);
+            return;
+        }
         
         const participantes = giveawayData.participantes || [];
         let descripcion;
@@ -96,6 +106,13 @@ async function finalizarGiveaway(client, giveawayData) {
         saveGiveaways(client.giveaways);
     } catch (error) {
         console.error('Error finalizing giveaway:', error);
+        // Still mark as inactive even on error
+        giveawayData.activo = false;
+        try {
+            saveGiveaways(client.giveaways);
+        } catch (saveError) {
+            console.error('Error saving giveaway after finalization error:', saveError);
+        }
     }
 }
 

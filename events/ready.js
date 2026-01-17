@@ -1,5 +1,7 @@
 const { Events, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
 const config = require('../config.json');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = {
     name: Events.ClientReady,
@@ -15,6 +17,10 @@ module.exports = {
         console.log(`📅 Fecha: ${new Date().toLocaleString('es-ES')}`);
         console.log(`===============================\n`);
 
+        // Load giveaways and reschedule them
+        console.log('🔄 Loading saved giveaways...');
+        await loadAndRescheduleGiveaways(client);
+
         // Registrar comandos slash si es necesario
         console.log('🔄 Verificando comandos slash...');
         
@@ -24,6 +30,53 @@ module.exports = {
         console.log('✅ Bot completamente inicializado y listo para usar!');
     },
 };
+
+async function loadAndRescheduleGiveaways(client) {
+    try {
+        const filePath = path.join(__dirname, '..', 'giveaways.json');
+        if (!fs.existsSync(filePath)) {
+            console.log('ℹ️ No saved giveaways found');
+            client.giveaways = new Map();
+            return;
+        }
+
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        client.giveaways = new Map(data);
+
+        if (client.giveaways.size === 0) {
+            console.log('ℹ️ No active giveaways to reschedule');
+            return;
+        }
+
+        console.log(`📦 Found ${client.giveaways.size} saved giveaways`);
+
+        // Reschedule all active giveaways
+        const giveawayModule = require('../commands/giveaway.js');
+        
+        for (const [messageId, giveawayData] of client.giveaways.entries()) {
+            if (!giveawayData.activo) continue;
+
+            const timeRemaining = giveawayData.finaliza - Date.now();
+
+            if (timeRemaining <= 0) {
+                // Giveaway already expired, finalize it
+                console.log(`⏰ Finalizing expired giveaway: ${giveawayData.premio}`);
+                await giveawayModule.finalizarGiveaway(client, giveawayData);
+            } else {
+                // Reschedule the giveaway finalization
+                console.log(`⏲️ Rescheduling giveaway "${giveawayData.premio}" in ${Math.round(timeRemaining / 1000)}s`);
+                setTimeout(async () => {
+                    await giveawayModule.finalizarGiveaway(client, giveawayData);
+                }, timeRemaining);
+            }
+        }
+
+        console.log('✅ Giveaways rescheduled');
+    } catch (error) {
+        console.error('Error loading giveaways:', error);
+        client.giveaways = new Map();
+    }
+}
 
 async function sendTicketPanel(client) {
     try {
