@@ -69,7 +69,7 @@ module.exports = {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return interaction.reply({
                 content: '❌ You do not have permission to create the ticket panel.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -130,7 +130,7 @@ module.exports = {
         if (!channel.name.startsWith('ticket-')) {
             return interaction.reply({
                 content: '❌ This command can only be used in ticket channels.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -138,7 +138,7 @@ module.exports = {
         const member = interaction.member;
         const hasAllowedRole = member.roles.cache.some(r => ALLOWED_CLOSE_ROLES.has(String(r.id)));
         if (!hasAllowedRole) {
-            return interaction.reply({ content: '❌ No tienes permiso para cerrar este ticket.', ephemeral: true });
+            return interaction.reply({ content: '❌ No tienes permiso para cerrar este ticket.', flags: 64 });
         }
 
         const reason = interaction.options.getString('reason') || 'Sin razón especificada';
@@ -178,7 +178,7 @@ module.exports = {
         if (!channel.name.startsWith('ticket-')) {
             return interaction.reply({
                 content: '❌ This command can only be used in ticket channels.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -189,7 +189,7 @@ module.exports = {
         if (!hasStaffRole && !member.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return interaction.reply({
                 content: '❌ You do not have permission to add users to this ticket.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -209,7 +209,7 @@ module.exports = {
             console.error('Error adding user:', error);
             await interaction.reply({
                 content: '❌ There was an error adding the user.',
-                ephemeral: true
+                flags: 64
             });
         }
     },
@@ -222,7 +222,7 @@ module.exports = {
         if (!channel.name.startsWith('ticket-')) {
             return interaction.reply({
                 content: '❌ This command can only be used in ticket channels.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -233,7 +233,7 @@ module.exports = {
         if (!hasStaffRole && !member.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return interaction.reply({
                 content: '❌ You do not have permission to remove users from this ticket.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -249,7 +249,7 @@ module.exports = {
             console.error('Error removing user:', error);
             await interaction.reply({
                 content: '❌ There was an error removing the user.',
-                ephemeral: true
+                flags: 64
             });
         }
     }

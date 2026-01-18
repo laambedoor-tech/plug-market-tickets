@@ -118,7 +118,8 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        // Defer is already done in index.js, use editReply for all responses
+        // Defer immediately
+        await interaction.deferReply();
 
         // Check perms
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageEvents)) {
@@ -201,6 +202,9 @@ module.exports = {
 
     async handleGiveawayButton(interaction) {
         try {
+            // Defer immediately to prevent timeout
+            await interaction.deferReply({ flags: 64 });
+            
             const messageId = interaction.message.id;
             const userId = interaction.user.id;
             const giveawayData = interaction.client.giveaways?.get(messageId);

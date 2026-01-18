@@ -52,7 +52,7 @@ class InvoiceHandler {
     static async showItems(interaction) {
         const orderId = interaction.customId.split(':')[1];
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         try {
             const invoice = await fetchInvoiceByOrderId(orderId);
@@ -174,7 +174,7 @@ class InvoiceHandler {
         if (!/^\d{17,20}$/.test(userId)) {
             return interaction.reply({
                 content: '❌ El User ID debe estar en la primera línea y tener 17-20 dígitos.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -184,7 +184,7 @@ class InvoiceHandler {
         if (!targetUser) {
             return interaction.reply({
                 content: '❌ No se pudo encontrar al usuario. Verifica que el ID sea correcto.',
-                ephemeral: true
+                flags: 64
             });
         }
 

@@ -21,21 +21,21 @@ class TicketHandler {
             switch (interaction.customId) {
                 case 'confirm_close':
                     if (!TicketHandler.hasClosePermission(interaction.member)) {
-                        await interaction.reply({ content: '❌ No tienes permiso para cerrar tickets.', ephemeral: true });
+                        await interaction.reply({ content: '❌ No tienes permiso para cerrar tickets.', flags: 64 });
                         return;
                     }
                     await this.confirmClose(interaction);
                     break;
                 case 'cancel_close':
                     if (!TicketHandler.hasClosePermission(interaction.member)) {
-                        await interaction.reply({ content: '❌ No tienes permiso para gestionar el cierre del ticket.', ephemeral: true });
+                        await interaction.reply({ content: '❌ No tienes permiso para gestionar el cierre del ticket.', flags: 64 });
                         return;
                     }
                     await this.cancelClose(interaction);
                     break;
                 case 'delete_ticket':
                     if (!TicketHandler.hasClosePermission(interaction.member)) {
-                        await interaction.reply({ content: '❌ No tienes permiso para eliminar tickets.', ephemeral: true });
+                        await interaction.reply({ content: '❌ No tienes permiso para eliminar tickets.', flags: 64 });
                         return;
                     }
                     await this.deleteTicket(interaction);
@@ -50,6 +50,9 @@ class TicketHandler {
     }
 
     static async createTicket(interaction) {
+        // DEFER IMMEDIATELY to prevent timeout
+        await interaction.deferReply({ flags: 64 });
+        
         const category = interaction.values[0];
         const user = interaction.user;
         const guild = interaction.guild;
@@ -68,9 +71,8 @@ class TicketHandler {
             missingPerms.push('View Channels');
         }
         if (missingPerms.length) {
-            return interaction.reply({
-                content: `❌ I need the following permissions to create ticket channels: ${missingPerms.join(', ')}. Please grant these to my highest role and try again.`,
-                ephemeral: true
+            return interaction.editReply({
+                content: `❌ I need the following permissions to create ticket channels: ${missingPerms.join(', ')}. Please grant these to my highest role and try again.`
             });
         }
 
@@ -80,13 +82,10 @@ class TicketHandler {
         );
 
         if (existingTicket) {
-            return interaction.reply({
-                content: `❌ You already have an open ticket in ${existingTicket}. Please use it or close it before creating a new one.`,
-                ephemeral: true
+            return interaction.editReply({
+                content: `❌ You already have an open ticket in ${existingTicket}. Please use it or close it before creating a new one.`
             });
         }
-
-        await interaction.deferReply({ ephemeral: true });
 
         try {
             // Obtener la categoría de tickets

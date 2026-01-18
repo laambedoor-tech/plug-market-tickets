@@ -21,7 +21,7 @@ module.exports = {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
             return interaction.reply({
                 content: '❌ Solo los administradores pueden usar este comando.',
-                ephemeral: true
+                flags: 64
             });
         }
 

@@ -136,18 +136,6 @@ client.on(Events.MessageCreate, async message => {
 // Manejar interacciones
 client.on(Events.InteractionCreate, async interaction => {
     try {
-        // IMMEDIATELY acknowledge to prevent timeout
-        if (!interaction.isButton() && !interaction.isStringSelectMenu() && !interaction.isModalSubmit()) {
-            // For slash commands, defer immediately
-            try {
-                await interaction.deferReply({ flags: 64 });
-            } catch (deferError) {
-                // If defer fails, something is seriously wrong, exit
-                console.error('Failed to defer slash command:', deferError);
-                return;
-            }
-        }
-        
         // Comandos slash
         if (interaction.isChatInputCommand()) {
             const command = client.commands.get(interaction.commandName);
@@ -177,15 +165,6 @@ client.on(Events.InteractionCreate, async interaction => {
         
         // Botones y menús desplegables
         if (interaction.isButton() || interaction.isStringSelectMenu() || interaction.isModalSubmit()) {
-            // Defer button interactions immediately
-            try {
-                await interaction.deferReply({ flags: 64 });
-            } catch (deferError) {
-                // If defer fails, exit
-                console.error('Failed to defer interaction:', deferError);
-                return;
-            }
-            
             try {
                 // Manejadores de diferentes módulos
                 if (interaction.customId.startsWith('giveaway_join_')) {
@@ -203,7 +182,7 @@ client.on(Events.InteractionCreate, async interaction => {
                 console.error('Error manejando interacción:', error);
                 
                 // No responder si el error es de interacción ya respondida
-                if (error.code === 40060) {
+                if (error.code === 40060 || error.code === 10062) {
                     return;
                 }
                 

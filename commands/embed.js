@@ -23,11 +23,11 @@ module.exports = {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
             return interaction.reply({
                 content: '❌ No tienes permisos para usar este comando.',
-                ephemeral: true
+                flags: 64
             });
         }
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         try {
             const jsonString = interaction.options.getString('json');
@@ -69,7 +69,7 @@ module.exports = {
             if (interaction.deferred) {
                 await interaction.editReply({ content: errorMessage });
             } else {
-                await interaction.reply({ content: errorMessage, ephemeral: true });
+                await interaction.reply({ content: errorMessage, flags: 64 });
             }
         }
     }

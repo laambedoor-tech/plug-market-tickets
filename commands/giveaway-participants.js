@@ -13,11 +13,14 @@ module.exports = {
         ),
 
     async execute(interaction) {
+        // Defer immediately to prevent timeout
+        await interaction.deferReply({ flags: 64 });
+        
         const messageIdInput = interaction.options.getString('message_id');
         const giveaways = interaction.client.giveaways;
 
         if (!giveaways || giveaways.size === 0) {
-            return interaction.reply({ content: '⚠️ No tracked giveaways right now. If there is an active giveaway, the bot may have been restarted.', flags: 64 });
+            return interaction.editReply({ content: '⚠️ No tracked giveaways right now. If there is an active giveaway, the bot may have been restarted.' });
         }
 
         let giveawayData;
@@ -25,12 +28,12 @@ module.exports = {
         if (messageIdInput) {
             giveawayData = giveaways.get(messageIdInput.trim());
             if (!giveawayData) {
-                return interaction.reply({ content: '❌ No giveaway found with that message ID.', flags: 64 });
+                return interaction.editReply({ content: '❌ No giveaway found with that message ID.' });
             }
         } else {
             const activeInGuild = [...giveaways.values()].filter(g => g.guildId === interaction.guild.id && g.activo);
             if (activeInGuild.length === 0) {
-                return interaction.reply({ content: '⚠️ No active giveaways found in this server. Provide a message_id if it exists.', flags: 64 });
+                return interaction.editReply({ content: '⚠️ No active giveaways found in this server. Provide a message_id if it exists.' });
             }
             // Pick the one that ends soonest
             activeInGuild.sort((a, b) => a.finaliza - b.finaliza);
@@ -38,7 +41,7 @@ module.exports = {
         }
 
         if (giveawayData.guildId !== interaction.guild.id) {
-            return interaction.reply({ content: '❌ That giveaway does not belong to this server.', flags: 64 });
+            return interaction.editReply({ content: '❌ That giveaway does not belong to this server.' });
         }
 
         const participantes = giveawayData.participantes || [];
@@ -60,6 +63,6 @@ module.exports = {
             )
             .setColor('#9d4edd');
 
-        return interaction.reply({ embeds: [embed], flags: 64 });
+        return interaction.editReply({ embeds: [embed] });
     }
 };

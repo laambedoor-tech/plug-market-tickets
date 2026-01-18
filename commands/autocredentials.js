@@ -258,7 +258,7 @@ module.exports = {
             if (!credentials) {
                 return interaction.editReply({
                     content: `❌ No hay credenciales disponibles para **${productName}**.`,
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
@@ -297,7 +297,7 @@ module.exports = {
             console.error('[replace] Error:', error);
             await interaction.editReply({
                 content: '❌ Ocurrió un error. Intenta de nuevo.',
-                ephemeral: true
+                flags: 64
             });
         }
     }
