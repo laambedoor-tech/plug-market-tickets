@@ -1,75 +1,60 @@
-const { SlashCommandBuilder, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const { EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 
-const SUGGESTION_CHANNEL_ID = '1462515571110313985';
+const SUGGESTION_CHANNEL_ID = '1462515571110313985'; // Canal donde se envían las sugerencias
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('suggestion')
-        .setDescription('💡 Enviar una sugerencia'),
-
-    async execute(interaction) {
+    async handleButton(interaction) {
         // Crear modal para la sugerencia
         const modal = new ModalBuilder()
             .setCustomId('suggestion_modal')
-            .setTitle('Enviar Sugerencia');
+            .setTitle('Please fill this out');
 
         // Campo de texto para la sugerencia
         const suggestionInput = new TextInputBuilder()
             .setCustomId('suggestion_text')
-            .setLabel('Tu sugerencia')
-            .setStyle(TextInputStyle.Paragraph)
-            .setPlaceholder('Escribe tu sugerencia aquí...')
+            .setLabel('Which Product Should be Restock or Add')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Add (product name) / restock (which product)')
             .setRequired(true)
-            .setMinLength(10)
-            .setMaxLength(1000);
+            .setMinLength(3)
+            .setMaxLength(200);
 
         const actionRow = new ActionRowBuilder().addComponents(suggestionInput);
         modal.addComponents(actionRow);
 
         await interaction.showModal(modal);
+    },
 
-        // Esperar a que el usuario envíe el modal
-        try {
-            const modalSubmit = await interaction.awaitModalSubmit({
-                filter: i => i.customId === 'suggestion_modal' && i.user.id === interaction.user.id,
-                time: 300000 // 5 minutos
-            });
+    async handleModal(interaction) {
+        const suggestionText = interaction.fields.getTextInputValue('suggestion_text');
 
-            const suggestionText = modalSubmit.fields.getTextInputValue('suggestion_text');
+        // Obtener el canal de sugerencias
+        const suggestionChannel = await interaction.client.channels.fetch(SUGGESTION_CHANNEL_ID);
 
-            // Obtener el canal de sugerencias
-            const suggestionChannel = await interaction.client.channels.fetch(SUGGESTION_CHANNEL_ID);
-
-            if (!suggestionChannel) {
-                return modalSubmit.reply({
-                    content: '❌ No se pudo encontrar el canal de sugerencias.',
-                    flags: 64
-                });
-            }
-
-            // Crear el embed de la sugerencia
-            const suggestionEmbed = new EmbedBuilder()
-                .setColor('#5865F2')
-                .setAuthor({
-                    name: `${interaction.user.tag}`,
-                    iconURL: interaction.user.displayAvatarURL()
-                })
-                .setDescription(suggestionText)
-                .setTimestamp()
-                .setFooter({ text: 'Sugerencia' });
-
-            // Enviar al canal de sugerencias
-            await suggestionChannel.send({ embeds: [suggestionEmbed] });
-
-            // Responder al usuario (mensaje efímero para que no se vea el comando)
-            await modalSubmit.reply({
-                content: '✅ Tu sugerencia ha sido enviada correctamente.',
+        if (!suggestionChannel) {
+            return interaction.reply({
+                content: '❌ Could not find the suggestions channel.',
                 flags: 64
             });
-
-        } catch (error) {
-            console.error('Error al procesar la sugerencia:', error);
-            // Si el modal expira o hay un error, no hacer nada (el usuario puede intentar de nuevo)
         }
+
+        // Crear el embed de la sugerencia
+        const suggestionEmbed = new EmbedBuilder()
+            .setColor('#5865F2')
+            .setAuthor({
+                name: interaction.user.tag,
+                iconURL: interaction.user.displayAvatarURL()
+            })
+            .setDescription(suggestionText)
+            .setTimestamp();
+
+        // Enviar al canal de sugerencias
+        await suggestionChannel.send({ embeds: [suggestionEmbed] });
+
+        // Responder al usuario (mensaje efímero)
+        await interaction.reply({
+            content: '✅ We have received your suggestion.',
+            flags: 64
+        });
     }
 };

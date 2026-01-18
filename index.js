@@ -78,13 +78,42 @@ if (fs.existsSync(eventsPath)) {
 */
 
 // Evento ready
-client.once(Events.ClientReady, () => {
+client.once(Events.ClientReady, async () => {
     console.log(`✅ Bot iniciado como ${client.user.tag}`);
     console.log(`🏪 Plug Market Tickets - Sistema de Soporte`);
     console.log(`📊 Sirviendo en ${client.guilds.cache.size} servidor(es)`);
     
     // Establecer actividad
     client.user.setActivity('Plug Market | /ticket', { type: ActivityType.Watching });
+
+    // Enviar embed de sugerencias automáticamente (DESACTIVADO)
+    /*
+    try {
+        const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+        const channelId = '1462515403858382878';
+        const channel = await client.channels.fetch(channelId);
+        
+        if (channel) {
+            const embed = new EmbedBuilder()
+                .setColor('#00FF00')
+                .setTitle('🍃 Restock a Product / Add a New Product')
+                .setDescription('• Request a **restock** of an product\n• Suggest **new products** you would like us to add')
+                .setFooter({ text: 'TicketToolxyz - Ticketing without clutter', iconURL: 'https://cdn.discordapp.com/emojis/1234567890.png' });
+
+            const button = new ButtonBuilder()
+                .setCustomId('open_suggestion_modal')
+                .setLabel('🍃 Restock a Product / Add a New product')
+                .setStyle(ButtonStyle.Success);
+
+            const row = new ActionRowBuilder().addComponents(button);
+
+            await channel.send({ embeds: [embed], components: [row] });
+            console.log('✅ Embed de sugerencias enviado automáticamente');
+        }
+    } catch (error) {
+        console.error('Error al enviar embed de sugerencias:', error);
+    }
+    */
 });
 
 // Manejar mensajes (comandos de prefijo)
@@ -173,6 +202,12 @@ client.on(Events.InteractionCreate, async interaction => {
                 } else if (interaction.customId.startsWith('invoice_')) {
                     const invoiceHandler = require('./handlers/invoiceHandler');
                     await invoiceHandler.handleInteraction(interaction);
+                } else if (interaction.customId === 'open_suggestion_modal') {
+                    const suggestionCommand = require('./commands/suggestion');
+                    await suggestionCommand.handleButton(interaction);
+                } else if (interaction.customId === 'suggestion_modal') {
+                    const suggestionCommand = require('./commands/suggestion');
+                    await suggestionCommand.handleModal(interaction);
                 } else {
                     // Importar el manejador de tickets
                     const ticketHandler = require('./handlers/ticketHandler');
