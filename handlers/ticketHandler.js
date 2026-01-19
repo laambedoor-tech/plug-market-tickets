@@ -425,9 +425,82 @@ class TicketHandler {
             .setTimestamp();
 
         try {
+            // Send review request
             await user.send({ embeds: [embed], components: [selectRow] });
+
+            // Generate and send transcript
+            const transcript = await this.generateTranscript(ticketChannel);
+            await user.send({
+                content: '📄 **Ticket Transcript**\nHere is the complete conversation from your ticket:',
+                files: [{
+                    attachment: Buffer.from(transcript, 'utf-8'),
+                    name: `ticket-${ticketChannel.name}-${Date.now()}.txt`
+                }]
+            });
         } catch (error) {
             console.warn('Could not send the review request DM to the user:', error.message);
+        }
+    }
+
+    static async generateTranscript(channel) {
+        try {
+            const messages = [];
+            let lastMessageId;
+
+            // Fetch all messages in the channel
+            while (true) {
+                const options = { limit: 100 };
+                if (lastMessageId) {
+                    options.before = lastMessageId;
+                }
+
+                const fetchedMessages = await channel.messages.fetch(options);
+                if (fetchedMessages.size === 0) break;
+
+                messages.push(...fetchedMessages.values());
+                lastMessageId = fetchedMessages.last().id;
+
+                if (fetchedMessages.size < 100) break;
+            }
+
+            // Sort messages by timestamp (oldest first)
+            messages.reverse();
+
+            // Format transcript
+            let transcript = `Ticket transcript #${channel.name}\n`;
+            transcript += `Server: ${channel.guild.name} | ${channel.guild.id}\n`;
+            transcript += `Channel: ${channel.id}\n`;
+            transcript += `Creator: <@${channel.topic?.match(/\((\d+)\)/)?.[1] || 'Unknown'}> (${channel.topic?.match(/\((\d+)\)/)?.[1] || 'Unknown'})\n`;
+            transcript += `Closed: ${new Date().toLocaleString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}\n`;
+            transcript += '\n';
+
+            for (const message of messages) {
+                const timestamp = message.createdAt.toLocaleString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+                const author = message.author.tag;
+                
+                transcript += `[${timestamp}] ${author}: ${message.content}\n`;
+
+                // Include attachments if any
+                if (message.attachments.size > 0) {
+                    message.attachments.forEach(attachment => {
+                        transcript += `[${timestamp}] ${author}: [Adjuntos: ${attachment.url}]\n`;
+                    });
+                }
+
+                // Include embeds if any
+                if (message.embeds.length > 0) {
+                    message.embeds.forEach(embed => {
+                        if (embed.title) {
+                            transcript += `[${timestamp}] ${author}: [Embed - ${embed.title}]\n`;
+                        }
+                    });
+                }
+            }
+
+            return transcript;
+        } catch (error) {
+            console.error('Error generating transcript:', error);
+            return `Error generating transcript: ${error.message}`;
         }
     }
 
