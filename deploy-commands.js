@@ -1,7 +1,14 @@
 const { REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const config = require('./config.json');
+
+// Cargar configuración según el entorno
+let config;
+if (process.env.NODE_ENV === 'production') {
+    config = require('./config-production.js');
+} else {
+    config = require('./config.json');
+}
 
 const commands = [];
 
@@ -9,7 +16,16 @@ const commands = [];
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
+// Archivos que no son comandos slash
+const nonSlashCommands = ['suggestion.js'];
+
 for (const file of commandFiles) {
+    // Saltar archivos que no son comandos slash
+    if (nonSlashCommands.includes(file)) {
+        console.log(`⏭️  Saltando ${file} (no es comando slash)`);
+        continue;
+    }
+
     const filePath = path.join(commandsPath, file);
     const command = require(filePath);
     

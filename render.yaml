@@ -3,7 +3,7 @@ services:
     name: plug-market-tickets
     env: node
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: node deploy-commands.js && npm start
     envVars:
       - key: NODE_ENV
         value: production

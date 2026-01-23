@@ -15,12 +15,12 @@ if (process.env.NODE_ENV === 'production') {
         process.exit(1);
     }
     if (!config.clientId) {
-        console.error('⚠️ ADVERTENCIA: CLIENT_ID no está configurado');
+        console.warn('⚠️ ADVERTENCIA: CLIENT_ID no está configurado (necesario para registrar comandos slash)');
     }
     if (!config.guildId) {
-        console.error('⚠️ ADVERTENCIA: GUILD_ID no está configurado');
+        console.warn('ℹ️ INFO: GUILD_ID no está configurado (comandos se registrarán globalmente)');
     }
-    console.log('✅ Token y configuración validados');
+    console.log('✅ Token validado - Bot puede iniciar');
 } else {
     config = require('./config.json');
     console.log('📝 Configuración de desarrollo cargada');
@@ -62,7 +62,16 @@ const commandsPath = path.join(__dirname, 'commands');
 if (fs.existsSync(commandsPath)) {
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
+    // Archivos que no son comandos slash (manejadores de eventos/botones)
+    const nonSlashCommands = ['suggestion.js'];
+
     for (const file of commandFiles) {
+        // Saltar archivos que no son comandos slash
+        if (nonSlashCommands.includes(file)) {
+            console.log(`⏭️  Saltando ${file} (no es comando slash)`);
+            continue;
+        }
+
         const filePath = path.join(commandsPath, file);
         const command = require(filePath);
         
