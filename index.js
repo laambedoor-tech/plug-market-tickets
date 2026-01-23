@@ -4,10 +4,26 @@ const path = require('path');
 
 // Cargar configuración (producción o desarrollo)
 let config;
+console.log(`🔧 Ambiente: ${process.env.NODE_ENV || 'development'}`);
 if (process.env.NODE_ENV === 'production') {
     config = require('./config-production.js');
+    console.log('📝 Configuración de producción cargada');
+    
+    // Validar variables de entorno críticas
+    if (!config.token) {
+        console.error('❌ ERROR CRÍTICO: DISCORD_TOKEN no está configurado');
+        process.exit(1);
+    }
+    if (!config.clientId) {
+        console.error('⚠️ ADVERTENCIA: CLIENT_ID no está configurado');
+    }
+    if (!config.guildId) {
+        console.error('⚠️ ADVERTENCIA: GUILD_ID no está configurado');
+    }
+    console.log('✅ Token y configuración validados');
 } else {
     config = require('./config.json');
+    console.log('📝 Configuración de desarrollo cargada');
 }
 
 // Crear cliente de Discord
@@ -82,6 +98,14 @@ client.once(Events.ClientReady, async () => {
     console.log(`✅ Bot iniciado como ${client.user.tag}`);
     console.log(`🏪 Plug Market Tickets - Sistema de Soporte`);
     console.log(`📊 Sirviendo en ${client.guilds.cache.size} servidor(es)`);
+    console.log(`🤖 Bot ID: ${client.user.id}`);
+    console.log(`⏰ Timestamp: ${new Date().toISOString()}`);
+    console.log(`📝 Comandos cargados: ${client.commands.size}`);
+    
+    // Listar comandos
+    if (client.commands.size > 0) {
+        console.log(`📋 Comandos disponibles: ${Array.from(client.commands.keys()).join(', ')}`);
+    }
     
     // Establecer actividad
     client.user.setActivity('Plug Market | /ticket', { type: ActivityType.Watching });
@@ -164,6 +188,7 @@ client.on(Events.MessageCreate, async message => {
 
 // Manejar interacciones
 client.on(Events.InteractionCreate, async interaction => {
+    console.log(`🔔 Interacción recibida: ${interaction.type} - ${interaction.customId || interaction.commandName || 'sin ID'} de ${interaction.user.tag}`);
     try {
         // Comandos slash
         if (interaction.isChatInputCommand()) {
@@ -246,11 +271,28 @@ client.on(Events.InteractionCreate, async interaction => {
 
 // Manejar errores
 process.on('unhandledRejection', error => {
-    console.error('Unhandled promise rejection:', error);
+    console.error('❌ Unhandled promise rejection:', error);
 });
 
 process.on('uncaughtException', error => {
-    console.error('Uncaught exception:', error);
+    console.error('❌ Uncaught exception:', error);
+});
+
+// Manejar errores de Discord
+client.on('error', error => {
+    console.error('❌ Error del cliente de Discord:', error);
+});
+
+client.on('warn', info => {
+    console.warn('⚠️ Advertencia de Discord:', info);
+});
+
+client.on('shardError', error => {
+    console.error('❌ Error de shard:', error);
+});
+
+client.on('shardReady', (shardId) => {
+    console.log(`✅ Shard ${shardId} listo`);
 });
 
 // Puerto para hosting (Render, Heroku, etc.)
@@ -260,7 +302,7 @@ const PORT = process.env.PORT || 3000;
 const http = require('http');
 const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('Plug Market Tickets Bot is running!');
+    res.end(`Plug Market Tickets Bot is running!\nBot Status: ${client.isReady() ? 'Online' : 'Connecting...'}\nUptime: ${Math.floor(client.uptime / 1000)}s`);
 });
 
 server.listen(PORT, () => {
@@ -268,4 +310,15 @@ server.listen(PORT, () => {
 });
 
 // Iniciar el bot
-client.login(config.token);
+console.log('🔐 Iniciando sesión en Discord...');
+client.login(config.token)
+    .then(() => {
+        console.log('✅ Login exitoso');
+    })
+    .catch(error => {
+        console.error('❌ Error al hacer login:', error);
+        if (error.code === 'TokenInvalid') {
+            console.error('❌ El token de Discord es inválido');
+        }
+        process.exit(1);
+    });
