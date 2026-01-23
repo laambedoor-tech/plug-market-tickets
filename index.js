@@ -26,7 +26,7 @@ if (process.env.NODE_ENV === 'production') {
     console.log('📝 Configuración de desarrollo cargada');
 }
 
-// Crear cliente de Discord
+// Crear cliente de Discord con configuración optimizada para Render
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -48,6 +48,19 @@ const client = new Client({
             interval: 300,
             lifetime: 60
         }
+    },
+    // Configuración WebSocket para mejorar conectividad
+    ws: {
+        large_threshold: 50,
+        compress: true,
+        properties: {
+            browser: 'Discord Client'
+        }
+    },
+    // Configuración REST con timeouts más largos
+    rest: {
+        timeout: 60000,
+        retries: 5
     },
     // Reducir shards y concurrencia
     shardCount: 1,
@@ -371,10 +384,15 @@ console.log('📋 Variables de entorno:', {
 
 // Agregar timeout para detectar si login se cuelga
 const loginTimeout = setTimeout(() => {
-    console.error('❌ TIMEOUT: Login tardó más de 30 segundos');
+    console.error('❌ TIMEOUT: Login tardó más de 60 segundos');
     console.error('❌ El bot no pudo conectarse a Discord');
-    console.error('ℹ️  Intentando continuar de todos modos...');
-}, 30000);
+    console.error('ℹ️  Posibles causas:');
+    console.error('   - Problemas de red en Render');
+    console.error('   - Firewall bloqueando WebSocket');
+    console.error('   - Recursos insuficientes (RAM/CPU)');
+    console.error('💡 Solución: Considera usar Render Paid o Railway/Fly.io');
+    process.exit(1); // Forzar reinicio para que Render reintente
+}, 60000);
 
 client.login(config.token)
     .then(() => {
