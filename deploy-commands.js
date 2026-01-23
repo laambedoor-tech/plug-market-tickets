@@ -70,17 +70,8 @@ const rest = new REST().setToken(config.token);
             );
             console.log(`✅ ${data.length} comandos registrados exitosamente globalmente.`);
         }
-            console.log(`✅ ${data.length} comandos registrados exitosamente en el servidor.`);
-        } else {
-            // Comandos globales (pueden tardar hasta 1 hora)
-            data = await rest.put(
-                Routes.applicationCommands(config.clientId),
-                { body: commands },
-            );
-            console.log(`✅ ${data.length} comandos registrados exitosamente globalmente.`);
-        }
 
-        console.log('\\n🎉 ¡Registro de comandos completado!');
+        console.log('\n🎉 ¡Registro de comandos completado!');
         
     } catch (error) {
         console.error('❌ Error registrando comandos:', error);
