@@ -320,14 +320,24 @@ server.listen(PORT, () => {
 
 // Iniciar el bot
 console.log('🔐 Iniciando sesión en Discord...');
+console.log('🔑 Token presente:', config.token ? `Sí (${config.token.substring(0, 20)}...)` : 'NO');
+console.log('📋 Variables de entorno:', {
+    NODE_ENV: process.env.NODE_ENV,
+    DISCORD_TOKEN_EXISTS: !!process.env.DISCORD_TOKEN,
+    CLIENT_ID_EXISTS: !!process.env.CLIENT_ID,
+    GUILD_ID_EXISTS: !!process.env.GUILD_ID
+});
+
 client.login(config.token)
     .then(() => {
-        console.log('✅ Login exitoso');
+        console.log('✅ Login exitoso - Esperando evento ready...');
     })
     .catch(error => {
         console.error('❌ Error al hacer login:', error);
+        console.error('❌ Error code:', error.code);
+        console.error('❌ Error message:', error.message);
         if (error.code === 'TokenInvalid') {
-            console.error('❌ El token de Discord es inválido');
+            console.error('❌ El token de Discord es inválido o ha sido regenerado');
         }
         process.exit(1);
     });
