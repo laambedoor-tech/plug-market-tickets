@@ -227,22 +227,21 @@ module.exports = {
 
     async handleGiveawayButton(interaction) {
         try {
-            // Defer immediately to prevent timeout
-            await interaction.deferReply({ flags: 64 });
-            
             const messageId = interaction.message.id;
             const userId = interaction.user.id;
             const giveawayData = interaction.client.giveaways?.get(messageId);
 
             if (!giveawayData || !giveawayData.activo) {
-                return interaction.editReply({
-                    content: '❌ This giveaway is no longer active.'
+                return interaction.reply({
+                    content: '❌ This giveaway is no longer active.',
+                    ephemeral: true
                 });
             }
 
             if (giveawayData.participantes.includes(userId)) {
-                return interaction.editReply({
-                    content: '⚠️ You are already participating in this giveaway.'
+                return interaction.reply({
+                    content: '⚠️ You are already participating in this giveaway.',
+                    ephemeral: true
                 });
             }
 
@@ -261,15 +260,19 @@ module.exports = {
 
             await interaction.message.edit({ embeds: [embedActualizado] });
 
-            await interaction.editReply({
-                content: '✅ You have successfully entered the giveaway!'
+            await interaction.reply({
+                content: '✅ You have successfully entered the giveaway!',
+                ephemeral: true
             });
 
         } catch (error) {
             console.error('Error in handleGiveawayButton:', error);
-            await interaction.editReply({
-                content: '❌ Error joining giveaway'
-            }).catch(() => {});
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ Error joining giveaway',
+                    ephemeral: true
+                }).catch(() => {});
+            }
         }
     }
 };
