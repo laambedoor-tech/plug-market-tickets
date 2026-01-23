@@ -55,20 +55,35 @@ async function finalizarGiveaway(client, giveawayData) {
         const message = await channel.messages.fetch(giveawayData.messageId);
         
         const participantes = giveawayData.participantes || [];
+        const cantidadGanadores = giveawayData.ganadores || 1;
         let descripcion;
-        let ganador = null;
+        let ganadores = [];
         
         if (participantes.length === 0) {
             descripcion = '❌ No participants in this giveaway.';
         } else {
-            ganador = participantes[Math.floor(Math.random() * participantes.length)];
-            descripcion = `🎉 **Winner:** <@${ganador}>\n\nCongratulations! You won **${giveawayData.premio}**`;
+            // Seleccionar múltiples ganadores únicos
+            const participantesCopia = [...participantes];
+            const numGanadores = Math.min(cantidadGanadores, participantesCopia.length);
+            
+            for (let i = 0; i < numGanadores; i++) {
+                const randomIndex = Math.floor(Math.random() * participantesCopia.length);
+                ganadores.push(participantesCopia[randomIndex]);
+                participantesCopia.splice(randomIndex, 1);
+            }
+            
+            if (ganadores.length === 1) {
+                descripcion = `🎉 **Winner:** <@${ganadores[0]}>\n\nCongratulations! You won **${giveawayData.premio}**`;
+            } else {
+                const ganadoresMention = ganadores.map(id => `<@${id}>`).join('\n');
+                descripcion = `🎉 **Winners:**\n${ganadoresMention}\n\nCongratulations! You won **${giveawayData.premio}**`;
+            }
         }
         
         const embedFinalizado = new EmbedBuilder()
             .setTitle(`🎁 ${giveawayData.premio}`)
             .setDescription(descripcion)
-            .setColor(ganador ? '#00ff00' : '#ff0000')
+            .setColor(ganadores.length > 0 ? '#00ff00' : '#ff0000')
             .setTimestamp()
             .setFooter({ text: 'Giveaway ended' });
         
@@ -86,9 +101,10 @@ async function finalizarGiveaway(client, giveawayData) {
             components: [row]
         });
         
-        if (ganador) {
+        if (ganadores.length > 0) {
+            const ganadoresContent = ganadores.map(id => `<@${id}>`).join(', ');
             await channel.send({
-                content: `🎊 Congratulations <@${ganador}>! You won **${giveawayData.premio}**\n\nPlease open a ticket in <#1434536298143813773> to claim your prize!`
+                content: `🎊 Congratulations ${ganadoresContent}! You won **${giveawayData.premio}**\n\nPlease open a ticket in <#1434536298143813773> to claim your prize!`
             });
         }
         
@@ -115,6 +131,14 @@ module.exports = {
                 .setName('duration')
                 .setDescription('Giveaway duration (e.g: 1h, 30m, 2d, 1w)')
                 .setRequired(true)
+        )
+        .addIntegerOption(option =>
+            option
+                .setName('winners')
+                .setDescription('Number of winners (default: 1)')
+                .setRequired(false)
+                .setMinValue(1)
+                .setMaxValue(20)
         ),
 
     async execute(interaction) {
@@ -131,6 +155,7 @@ module.exports = {
         try {
             const premio = interaction.options.getString('prize');
             const duracionStr = interaction.options.getString('duration');
+            const cantidadGanadores = interaction.options.getInteger('winners') || 1;
 
             const duracionMs = parseDuracion(duracionStr);
             if (!duracionMs) {
@@ -146,7 +171,7 @@ module.exports = {
                 .setTitle(`🎁 ${premio}`)
                 .setDescription(
                     `🎉 **Ends:** in ${formatDuracion(duracionMs)} | 👑 **Host:** ${interaction.user}\n` +
-                    `🏆 **Winners:** 1\n\n` +
+                    `🏆 **Winners:** ${cantidadGanadores}\n\n` +
                     `*Click the button below to secure your entry!*`
                 )
                 .setColor('#9d4edd')
@@ -174,7 +199,7 @@ module.exports = {
                 hostId: interaction.user.id,
                 finaliza: finalizaEn,
                 participantes: [],
-                ganadores: 1,
+                ganadores: cantidadGanadores,
                 activo: true
             };
 
