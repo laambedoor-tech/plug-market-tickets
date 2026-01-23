@@ -296,12 +296,32 @@ client.on('warn', info => {
     console.warn('⚠️ Advertencia de Discord:', info);
 });
 
+client.on('debug', info => {
+    // Solo mostrar debug importante en producción
+    if (process.env.NODE_ENV === 'production' && (
+        info.includes('Session') || 
+        info.includes('Gateway') || 
+        info.includes('Heartbeat') ||
+        info.includes('Ready')
+    )) {
+        console.log('🐛 DEBUG:', info);
+    }
+});
+
 client.on('shardError', error => {
     console.error('❌ Error de shard:', error);
 });
 
 client.on('shardReady', (shardId) => {
     console.log(`✅ Shard ${shardId} listo`);
+});
+
+client.on('shardDisconnect', (event, shardId) => {
+    console.log(`🔌 Shard ${shardId} desconectado:`, event);
+});
+
+client.on('shardReconnecting', (shardId) => {
+    console.log(`🔄 Shard ${shardId} reconectando...`);
 });
 
 // Puerto para hosting (Render, Heroku, etc.)
@@ -328,11 +348,20 @@ console.log('📋 Variables de entorno:', {
     GUILD_ID_EXISTS: !!process.env.GUILD_ID
 });
 
+// Agregar timeout para detectar si login se cuelga
+const loginTimeout = setTimeout(() => {
+    console.error('❌ TIMEOUT: Login tardó más de 30 segundos');
+    console.error('❌ El bot no pudo conectarse a Discord');
+    console.error('ℹ️  Intentando continuar de todos modos...');
+}, 30000);
+
 client.login(config.token)
     .then(() => {
+        clearTimeout(loginTimeout);
         console.log('✅ Login exitoso - Esperando evento ready...');
     })
     .catch(error => {
+        clearTimeout(loginTimeout);
         console.error('❌ Error al hacer login:', error);
         console.error('❌ Error code:', error.code);
         console.error('❌ Error message:', error.message);
