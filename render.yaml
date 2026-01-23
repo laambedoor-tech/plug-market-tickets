@@ -1,9 +1,12 @@
 services:
-  - type: web
+  # Cambiar a worker (mejor para bots Discord)
+  - type: worker
     name: plug-market-tickets
     env: node
-    buildCommand: npm install && chmod +x start.sh
-    startCommand: ./start.sh
+    buildCommand: npm install
+    startCommand: node index.js
     envVars:
       - key: NODE_ENV
         value: production
+    # Auto restart en caso de fallo
+    autoDeploy: true

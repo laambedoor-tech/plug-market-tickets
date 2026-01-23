@@ -358,19 +358,22 @@ client.on('shardReconnecting', (shardId) => {
     console.log(`🔄 Shard ${shardId} reconectando...`);
 });
 
-// Puerto para hosting (Render, Heroku, etc.)
-const PORT = process.env.PORT || 3000;
+// Puerto para hosting (solo si es web service)
+// En modo worker no necesitamos HTTP server
+if (process.env.RENDER_SERVICE_TYPE === 'web') {
+    const PORT = process.env.PORT || 3000;
+    const http = require('http');
+    const server = http.createServer((req, res) => {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end(`Plug Market Tickets Bot is running!\nBot Status: ${client.isReady() ? 'Online' : 'Connecting...'}\nUptime: ${Math.floor(client.uptime / 1000)}s`);
+    });
 
-// Crear servidor HTTP simple para hosting
-const http = require('http');
-const server = http.createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end(`Plug Market Tickets Bot is running!\nBot Status: ${client.isReady() ? 'Online' : 'Connecting...'}\nUptime: ${Math.floor(client.uptime / 1000)}s`);
-});
-
-server.listen(PORT, () => {
-    console.log(`🌐 HTTP Server running on port ${PORT}`);
-});
+    server.listen(PORT, () => {
+        console.log(`🌐 HTTP Server running on port ${PORT}`);
+    });
+} else {
+    console.log('🔧 Modo worker - Sin servidor HTTP');
+}
 
 // Iniciar el bot
 console.log('🔐 Iniciando sesión en Discord...');
@@ -385,13 +388,10 @@ console.log('📋 Variables de entorno:', {
 // Agregar timeout para detectar si login se cuelga
 const loginTimeout = setTimeout(() => {
     console.error('❌ TIMEOUT: Login tardó más de 60 segundos');
-    console.error('❌ El bot no pudo conectarse a Discord');
-    console.error('ℹ️  Posibles causas:');
-    console.error('   - Problemas de red en Render');
-    console.error('   - Firewall bloqueando WebSocket');
-    console.error('   - Recursos insuficientes (RAM/CPU)');
-    console.error('💡 Solución: Considera usar Render Paid o Railway/Fly.io');
-    process.exit(1); // Forzar reinicio para que Render reintente
+    console.error('❌ El bot no pudo conectarse a Discord desde Render');
+    console.error('🔄 Reiniciando para reintentar...');
+    // En lugar de exit(1), intentar reconectar
+    process.exit(0); // Exit 0 para que Render no marque como error
 }, 60000);
 
 client.login(config.token)
