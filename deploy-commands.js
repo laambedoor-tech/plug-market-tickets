@@ -42,7 +42,14 @@ const rest = new REST().setToken(config.token);
 
 (async () => {
     try {
-        console.log(`\\n🔄 Iniciando registro de ${commands.length} comandos slash...`);
+        console.log(`\n🔄 Iniciando registro de ${commands.length} comandos slash...`);
+
+        // Validar que tengamos clientId
+        if (!config.clientId) {
+            console.error('❌ ERROR: CLIENT_ID no está configurado. No se pueden registrar comandos.');
+            console.log('ℹ️  Configura CLIENT_ID en las variables de entorno.');
+            process.exit(1);
+        }
 
         // Registrar comandos globalmente (quita guildId para comandos globales)
         // Para desarrollo, usa guildId para registro instantáneo
@@ -54,6 +61,15 @@ const rest = new REST().setToken(config.token);
                 Routes.applicationGuildCommands(config.clientId, config.guildId),
                 { body: commands },
             );
+            console.log(`✅ ${data.length} comandos registrados exitosamente en el servidor.`);
+        } else {
+            // Comandos globales (pueden tardar hasta 1 hora)
+            data = await rest.put(
+                Routes.applicationCommands(config.clientId),
+                { body: commands },
+            );
+            console.log(`✅ ${data.length} comandos registrados exitosamente globalmente.`);
+        }
             console.log(`✅ ${data.length} comandos registrados exitosamente en el servidor.`);
         } else {
             // Comandos globales (pueden tardar hasta 1 hora)
