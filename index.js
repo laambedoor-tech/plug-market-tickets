@@ -32,7 +32,28 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.DirectMessages
     ],
-    partials: [Partials.Channel]
+    partials: [Partials.Channel],
+    // Optimizaciones para reducir uso de memoria
+    makeCache: require('discord.js').Options.cacheWithLimits({
+        MessageManager: 0,
+        PresenceManager: 0,
+        ReactionManager: 0,
+        GuildMemberManager: {
+            maxSize: 1,
+            keepOverLimit: member => member.id === client.user?.id
+        }
+    }),
+    sweepers: {
+        messages: {
+            interval: 300,
+            lifetime: 60
+        }
+    },
+    // Reducir shards y concurrencia
+    shardCount: 1,
+    presence: {
+        status: 'online'
+    }
 });
 
 // Colección de comandos
