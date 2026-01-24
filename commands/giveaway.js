@@ -49,6 +49,10 @@ function loadGiveaways() {
     }
 }
 
+function getGiveawayKey(messageId) {
+    return `giveaway_${messageId}`;
+}
+
 async function finalizarGiveaway(client, giveawayData) {
     try {
         const channel = await client.channels.fetch(giveawayData.channelId);
@@ -171,7 +175,8 @@ module.exports = {
                 .setTitle(`🎁 ${premio}`)
                 .setDescription(
                     `🎉 **Ends:** in ${formatDuracion(duracionMs)} | 👑 **Host:** ${interaction.user}\n` +
-                    `🏆 **Winners:** ${cantidadGanadores}\n\n` +
+                    `🏆 **Winners:** ${cantidadGanadores}\n` +
+                    `👥 **Participants:** 0\n\n` +
                     `*Click the button below to secure your entry!*`
                 )
                 .setColor('#9d4edd')
@@ -179,7 +184,7 @@ module.exports = {
                 .setFooter({ text: `Finaliza` });
 
             const button = new ButtonBuilder()
-                .setCustomId(`giveaway_join_${Date.now()}`)
+                .setCustomId(getGiveawayKey(giveawayMessage.id))
                 .setLabel('Participate!')
                 .setStyle(ButtonStyle.Primary)
                 .setEmoji('🎉');
@@ -226,57 +231,71 @@ module.exports = {
     },
 
     async handleGiveawayButton(interaction) {
-        try {
-            const messageId = interaction.message.id;
-            const userId = interaction.user.id;
-            const giveawayData = interaction.client.giveaways?.get(messageId);
+        // Responder INMEDIATAMENTE - esto es crítico
+        const messageId = interaction.message.id;
+        const userId = interaction.user.id;
+        
+        // Buscar el giveaway
+        if (!interaction.client.giveaways) {
+            interaction.client.giveaways = loadGiveaways();
+        }
+        
+        const giveawayData = interaction.client.giveaways.get(messageId);
 
-            if (!giveawayData || !giveawayData.activo) {
-                return await interaction.reply({
-                    content: '❌ This giveaway is no longer active.',
-                    ephemeral: true
-                });
-            }
+        // Validar giveaway
+        if (!giveawayData || !giveawayData.activo) {
+            return interaction.reply({
+                content: '❌ This giveaway is no longer active.',
+                flags: 64
+            }).catch(console.error);
+        }
 
-            if (giveawayData.participantes.includes(userId)) {
-                return await interaction.reply({
-                    content: '⚠️ You are already participating in this giveaway.',
-                    ephemeral: true
-                });
-            }
+        // Verificar si ya participa
+        if (giveawayData.participantes.includes(userId)) {
+            return interaction.reply({
+                content: '⚠️ You are already participating in this giveaway.',
+                flags: 64
+            }).catch(console.error);
+        }
 
-            // Responder inmediatamente antes de hacer cualquier otra cosa
-            await interaction.reply({
-                content: '✅ You have successfully entered the giveaway!',
-                ephemeral: true
-            });
+        // Añadir participante
+        giveawayData.participantes.push(userId);
+        interaction.client.giveaways.set(messageId, giveawayData);
+        saveGiveaways(interaction.client.giveaways);
 
-            // Luego actualizar los datos
-            giveawayData.participantes.push(userId);
-            saveGiveaways(interaction.client.giveaways);
+        // Responder al usuario
+        interaction.reply({
+            content: '✅ You have successfully entered the giveaway!',
+            flags: 64
+        }).catch(console.error);
 
-            const embed = interaction.message.embeds[0];
-            const duracionRestante = giveawayData.finaliza - Date.now();
-
-            const embedActualizado = EmbedBuilder.from(embed)
+        // Actualizar embed (sin esperar)
+        const duracionRestante = giveawayData.finaliza - Date.now();
+        if (duracionRestante > 0) {
+            const embed = new EmbedBuilder()
+                .setTitle(`🎁 ${giveawayData.premio}`)
                 .setDescription(
                     `🎉 **Ends:** in ${formatDuracion(duracionRestante)} | 👑 **Host:** <@${giveawayData.hostId}>\n` +
-                    `🏆 **Winners:** ${giveawayData.ganadores}\n\n` +
+                    `🏆 **Winners:** ${giveawayData.ganadores}\n` +
+                    `👥 **Participants:** ${giveawayData.participantes.length}\n\n` +
                     `*Click the button below to secure your entry!*`
-                );
+                )
+                .setColor('#9d4edd')
+                .setTimestamp(new Date(giveawayData.finaliza))
+                .setFooter({ text: 'Finaliza' });
 
-            await interaction.message.edit({ embeds: [embedActualizado] }).catch(err => {
-                console.error('Error updating giveaway message:', err);
-            });
+            const button = new ButtonBuilder()
+                .setCustomId(getGiveawayKey(messageId))
+                .setLabel('Participate!')
+                .setStyle(ButtonStyle.Primary)
+                .setEmoji('🎉');
 
-        } catch (error) {
-            console.error('Error in handleGiveawayButton:', error);
-            if (!interaction.replied && !interaction.deferred) {
-                await interaction.reply({
-                    content: '❌ Error joining giveaway',
-                    ephemeral: true
-                }).catch(() => {});
-            }
+            const row = new ActionRowBuilder().addComponents(button);
+
+            interaction.message.edit({
+                embeds: [embed],
+                components: [row]
+            }).catch(err => console.error('Error updating message:', err));
         }
     }
 };

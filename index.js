@@ -264,9 +264,10 @@ client.on(Events.InteractionCreate, async interaction => {
         if (interaction.isButton() || interaction.isStringSelectMenu() || interaction.isModalSubmit()) {
             try {
                 // Manejadores de diferentes módulos
-                if (interaction.customId.startsWith('giveaway_join_')) {
+                if (interaction.customId.startsWith('giveaway_')) {
                     const giveawayCommand = require('./commands/giveaway');
                     await giveawayCommand.handleGiveawayButton(interaction);
+                    return; // Salir inmediatamente después de manejar
                 } else if (interaction.customId.startsWith('invoice_')) {
                     const invoiceHandler = require('./handlers/invoiceHandler');
                     await invoiceHandler.handleInteraction(interaction);
