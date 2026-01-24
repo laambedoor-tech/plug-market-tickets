@@ -232,19 +232,26 @@ module.exports = {
             const giveawayData = interaction.client.giveaways?.get(messageId);
 
             if (!giveawayData || !giveawayData.activo) {
-                return interaction.reply({
+                return await interaction.reply({
                     content: '❌ This giveaway is no longer active.',
                     ephemeral: true
                 });
             }
 
             if (giveawayData.participantes.includes(userId)) {
-                return interaction.reply({
+                return await interaction.reply({
                     content: '⚠️ You are already participating in this giveaway.',
                     ephemeral: true
                 });
             }
 
+            // Responder inmediatamente antes de hacer cualquier otra cosa
+            await interaction.reply({
+                content: '✅ You have successfully entered the giveaway!',
+                ephemeral: true
+            });
+
+            // Luego actualizar los datos
             giveawayData.participantes.push(userId);
             saveGiveaways(interaction.client.giveaways);
 
@@ -258,11 +265,8 @@ module.exports = {
                     `*Click the button below to secure your entry!*`
                 );
 
-            await interaction.message.edit({ embeds: [embedActualizado] });
-
-            await interaction.reply({
-                content: '✅ You have successfully entered the giveaway!',
-                ephemeral: true
+            await interaction.message.edit({ embeds: [embedActualizado] }).catch(err => {
+                console.error('Error updating giveaway message:', err);
             });
 
         } catch (error) {

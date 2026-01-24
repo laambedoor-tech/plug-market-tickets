@@ -284,8 +284,8 @@ client.on(Events.InteractionCreate, async interaction => {
             } catch (error) {
                 console.error('Error manejando interacción:', error);
                 
-                // No responder si el error es de interacción ya respondida
-                if (error.code === 40060 || error.code === 10062) {
+                // No responder si el error es de interacción ya respondida o desconocida
+                if (error.code === 40060 || error.code === 10062 || error.code === 10008) {
                     return;
                 }
                 
