@@ -277,6 +277,23 @@ class TicketHandler {
         
         await interaction.deferUpdate();
 
+        // Extract info BEFORE heavy operations
+        const userId = channel.topic?.match(/\((\d+)\)/)?.[1];
+        const categoryFromTopic = channel.topic?.match(/Category:\s([^)]*)$/)?.[1]?.trim() || 'Unknown';
+        const ticketOwner = userId ? await interaction.client.users.fetch(userId).catch(() => null) : null;
+        
+        // Generate transcript BEFORE closing (this is critical!)
+        let transcript = null;
+        if (ticketOwner) {
+            try {
+                console.log(`📝 Generating transcript for ${ticketOwner.tag}...`);
+                transcript = await this.generateTranscript(channel);
+                console.log(`✅ Transcript generated (${transcript.length} chars)`);
+            } catch (error) {
+                console.error('❌ Error generating transcript:', error);
+            }
+        }
+
         // Close confirmation embed
         const embed = new EmbedBuilder()
             .setTitle('🔒 Ticket Closed')
@@ -295,17 +312,14 @@ class TicketHandler {
             components: []
         });
 
-        // Intentar enviar solicitud de review al creador del ticket
-        const userId = channel.topic?.match(/\((\d+)\)/)?.[1];
-        const ticketOwner = userId ? await interaction.client.users.fetch(userId).catch(() => null) : null;
-        const categoryFromTopic = channel.topic?.match(/Category:\s([^)]*)$/)?.[1]?.trim() || 'Unknown';
-
+        // Send review request with pre-generated transcript
         if (ticketOwner) {
             await this.sendReviewRequest({
                 user: ticketOwner,
                 closer: interaction.user,
                 ticketChannel: channel,
-                category: categoryFromTopic
+                category: categoryFromTopic,
+                transcript: transcript
             });
         }
 
@@ -395,7 +409,7 @@ class TicketHandler {
         }
     }
 
-    static async sendReviewRequest({ user, closer, ticketChannel, category }) {
+    static async sendReviewRequest({ user, closer, ticketChannel, category, transcript }) {
         const selectId = `ticket_review:${ticketChannel.id}:${user.id}:${closer.id}`;
         const starOptions = [1, 2, 3, 4, 5].map(value => ({
             label: `${'★'.repeat(value)}${'☆'.repeat(5 - value)}`,
@@ -426,19 +440,24 @@ class TicketHandler {
 
         try {
             // Send review request
+            console.log(`📨 Sending review request to ${user.tag}...`);
             await user.send({ embeds: [embed], components: [selectRow] });
+            console.log(`✅ Review request sent to ${user.tag}`);
 
-            // Generate and send transcript
-            const transcript = await this.generateTranscript(ticketChannel);
-            await user.send({
-                content: '📄 **Ticket Transcript**\nHere is the complete conversation from your ticket:',
-                files: [{
-                    attachment: Buffer.from(transcript, 'utf-8'),
-                    name: `ticket-${ticketChannel.name}-${Date.now()}.txt`
-                }]
-            });
+            // Send transcript if available
+            if (transcript) {
+                console.log(`📨 Sending transcript to ${user.tag}...`);
+                await user.send({
+                    content: '📄 **Ticket Transcript**\nHere is the complete conversation from your ticket:',
+                    files: [{
+                        attachment: Buffer.from(transcript, 'utf-8'),
+                        name: `ticket-${ticketChannel.name}-${Date.now()}.txt`
+                    }]
+                });
+                console.log(`✅ Transcript sent to ${user.tag}`);
+            }
         } catch (error) {
-            console.warn('Could not send the review request DM to the user:', error.message);
+            console.error(`❌ Could not send DM to ${user.tag}:`, error.message);
         }
     }
 
