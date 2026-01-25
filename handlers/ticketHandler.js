@@ -277,23 +277,6 @@ class TicketHandler {
         
         await interaction.deferUpdate();
 
-        // Extract info BEFORE heavy operations
-        const userId = channel.topic?.match(/\((\d+)\)/)?.[1];
-        const categoryFromTopic = channel.topic?.match(/Category:\s([^)]*)$/)?.[1]?.trim() || 'Unknown';
-        const ticketOwner = userId ? await interaction.client.users.fetch(userId).catch(() => null) : null;
-        
-        // Generate transcript BEFORE closing (this is critical!)
-        let transcript = null;
-        if (ticketOwner) {
-            try {
-                console.log(`📝 Generating transcript for ${ticketOwner.tag}...`);
-                transcript = await this.generateTranscript(channel);
-                console.log(`✅ Transcript generated (${transcript.length} chars)`);
-            } catch (error) {
-                console.error('❌ Error generating transcript:', error);
-            }
-        }
-
         // Close confirmation embed
         const embed = new EmbedBuilder()
             .setTitle('🔒 Ticket Closed')
@@ -312,14 +295,17 @@ class TicketHandler {
             components: []
         });
 
-        // Send review request with pre-generated transcript
+        // Intentar enviar solicitud de review al creador del ticket
+        const userId = channel.topic?.match(/\((\d+)\)/)?.[1];
+        const ticketOwner = userId ? await interaction.client.users.fetch(userId).catch(() => null) : null;
+        const categoryFromTopic = channel.topic?.match(/Category:\s([^)]*)$/)?.[1]?.trim() || 'Unknown';
+
         if (ticketOwner) {
             await this.sendReviewRequest({
                 user: ticketOwner,
                 closer: interaction.user,
                 ticketChannel: channel,
-                category: categoryFromTopic,
-                transcript: transcript
+                category: categoryFromTopic
             });
         }
 
@@ -409,7 +395,7 @@ class TicketHandler {
         }
     }
 
-    static async sendReviewRequest({ user, closer, ticketChannel, category, transcript }) {
+    static async sendReviewRequest({ user, closer, ticketChannel, category }) {
         const selectId = `ticket_review:${ticketChannel.id}:${user.id}:${closer.id}`;
         const starOptions = [1, 2, 3, 4, 5].map(value => ({
             label: `${'★'.repeat(value)}${'☆'.repeat(5 - value)}`,
@@ -425,39 +411,37 @@ class TicketHandler {
         );
 
         const embed = new EmbedBuilder()
-            .setTitle('🙏 Thanks for using our support')
+            .setTitle('⭐ Rate Your Support Experience')
             .setDescription(
-                'Your ticket has been closed. Could you rate the support you received?\n\n' +
-                'Choose a rating from 1 to 5 stars. This helps us improve.'
+                `Thank you for contacting **Plug Market Support**!\n\n` +
+                `Your ticket has been closed. We'd love to hear your feedback!\n` +
+                `Please rate the support you received from **${closer ? closer.username : 'our team'}**.`
             )
             .addFields([
-                { name: 'Ticket', value: ticketChannel.name, inline: true },
-                { name: 'Category', value: category, inline: true },
-                { name: 'Closed by', value: closer ? closer.tag : 'Unknown', inline: true }
+                { name: '🎫 Ticket', value: `\`${ticketChannel.name}\``, inline: true },
+                { name: '📂 Category', value: category, inline: true },
+                { name: '👤 Staff', value: closer ? closer.toString() : 'Unknown', inline: true }
             ])
             .setColor(config.colors.primary)
+            .setThumbnail(closer ? closer.displayAvatarURL({ dynamic: true }) : null)
+            .setFooter({ text: 'Plug Market • Feedback System' })
             .setTimestamp();
 
         try {
             // Send review request
-            console.log(`📨 Sending review request to ${user.tag}...`);
             await user.send({ embeds: [embed], components: [selectRow] });
-            console.log(`✅ Review request sent to ${user.tag}`);
 
-            // Send transcript if available
-            if (transcript) {
-                console.log(`📨 Sending transcript to ${user.tag}...`);
-                await user.send({
-                    content: '📄 **Ticket Transcript**\nHere is the complete conversation from your ticket:',
-                    files: [{
-                        attachment: Buffer.from(transcript, 'utf-8'),
-                        name: `ticket-${ticketChannel.name}-${Date.now()}.txt`
-                    }]
-                });
-                console.log(`✅ Transcript sent to ${user.tag}`);
-            }
+            // Generate and send transcript
+            const transcript = await this.generateTranscript(ticketChannel);
+            await user.send({
+                content: '📄 **Ticket Transcript**\nHere is the complete conversation from your ticket:',
+                files: [{
+                    attachment: Buffer.from(transcript, 'utf-8'),
+                    name: `ticket-${ticketChannel.name}-${Date.now()}.txt`
+                }]
+            });
         } catch (error) {
-            console.error(`❌ Could not send DM to ${user.tag}:`, error.message);
+            console.warn('Could not send the review request DM to the user:', error.message);
         }
     }
 
@@ -528,10 +512,16 @@ class TicketHandler {
         const rating = parseInt(interaction.values[0], 10);
 
         // Confirm to the user in DM
+        const stars = '⭐'.repeat(rating);
         const thanksEmbed = new EmbedBuilder()
-            .setTitle('✅ Thanks for your rating!')
-            .setDescription(`You rated the ticket **${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}**`)
+            .setTitle('✅ Review Submitted!')
+            .setDescription(
+                `Thank you for your feedback!\n\n` +
+                `**Your Rating:** ${stars} (${rating}/5)\n\n` +
+                `Your review helps us improve our service quality.`
+            )
             .setColor(config.colors.success)
+            .setFooter({ text: 'Plug Market • We appreciate your feedback!' })
             .setTimestamp();
 
         await interaction.update({ embeds: [thanksEmbed], components: [] });
@@ -547,17 +537,19 @@ class TicketHandler {
 
         const closerMention = closerId ? `<@${closerId}>` : 'Unknown';
         const userMention = userId ? `<@${userId}>` : interaction.user.toString();
-        const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+        const starsDisplay = '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
+        const ratingColor = rating >= 4 ? config.colors.success : rating >= 3 ? config.colors.warning : config.colors.error;
 
         const reviewEmbed = new EmbedBuilder()
-            .setTitle('📝 New Ticket Review')
-            .setDescription(`Rating: **${stars}**`)
+            .setAuthor({ name: 'New Feedback Received', iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
+            .setDescription(`${starsDisplay}\n**Rating: ${rating}/5**`)
             .addFields([
-                { name: 'User', value: userMention, inline: true },
-                { name: 'Closed by', value: closerMention, inline: true },
-                { name: 'Ticket', value: ticketId ? `#${ticketId}` : 'Unknown', inline: true }
+                { name: '👤 Customer', value: userMention, inline: true },
+                { name: '🛠️ Staff', value: closerMention, inline: true },
+                { name: '🎫 Ticket', value: ticketId ? `\`${ticketId}\`` : 'Unknown', inline: true }
             ])
-            .setColor(config.colors.secondary)
+            .setColor(ratingColor)
+            .setFooter({ text: 'Plug Market • Review System' })
             .setTimestamp();
 
         try {

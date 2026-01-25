@@ -107,12 +107,17 @@ if (fs.existsSync(commandsPath)) {
         }
 
         const filePath = path.join(commandsPath, file);
-        const command = require(filePath);
-        
-        if ('data' in command && 'execute' in command) {
-            client.commands.set(command.data.name, command);
-        } else {
-            console.log(`[WARNING] El comando en ${filePath} no tiene las propiedades "data" o "execute" requeridas.`);
+        try {
+            console.log(`🔍 Cargando comando: ${file}`);
+            const command = require(filePath);
+            if ('data' in command && 'execute' in command) {
+                client.commands.set(command.data.name, command);
+                console.log(`✅ Comando cargado: ${command.data.name}`);
+            } else {
+                console.log(`[WARNING] El comando en ${filePath} no tiene las propiedades "data" o "execute" requeridas.`);
+            }
+        } catch (err) {
+            console.error(`❌ Error cargando comando ${file}:`, err.message);
         }
     }
 }
@@ -235,11 +240,24 @@ client.on(Events.InteractionCreate, async interaction => {
     try {
         // Comandos slash
         if (interaction.isChatInputCommand()) {
-            const command = client.commands.get(interaction.commandName);
+            let command = client.commands.get(interaction.commandName);
 
             if (!command) {
-                console.error(`No se encontró el comando ${interaction.commandName}.`);
-                return;
+                console.error(`No se encontró el comando ${interaction.commandName}. Cargando fallback...`);
+                try {
+                    const possiblePath = path.join(commandsPath, `${interaction.commandName}.js`);
+                    if (fs.existsSync(possiblePath)) {
+                        const mod = require(possiblePath);
+                        if ('data' in mod && 'execute' in mod) {
+                            client.commands.set(mod.data.name, mod);
+                            command = mod;
+                            console.log(`✅ Fallback cargado: ${mod.data.name}`);
+                        }
+                    }
+                } catch (e) {
+                    console.error('❌ Fallback failed:', e.message);
+                }
+                if (!command) return;
             }
 
             try {
@@ -271,14 +289,12 @@ client.on(Events.InteractionCreate, async interaction => {
                 } else if (interaction.customId.startsWith('invoice_')) {
                     const invoiceHandler = require('./handlers/invoiceHandler');
                     await invoiceHandler.handleInteraction(interaction);
-                } else if (interaction.customId === 'open_suggestion' || interaction.customId === 'open_suggestion_modal') {
+                } else if (interaction.customId === 'open_suggestion_modal') {
                     const suggestionCommand = require('./commands/suggestion');
                     await suggestionCommand.handleButton(interaction);
-                    return;
                 } else if (interaction.customId === 'suggestion_modal') {
                     const suggestionCommand = require('./commands/suggestion');
                     await suggestionCommand.handleModal(interaction);
-                    return;
                 } else {
                     // Importar el manejador de tickets
                     const ticketHandler = require('./handlers/ticketHandler');
