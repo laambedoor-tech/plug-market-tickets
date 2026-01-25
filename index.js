@@ -271,12 +271,14 @@ client.on(Events.InteractionCreate, async interaction => {
                 } else if (interaction.customId.startsWith('invoice_')) {
                     const invoiceHandler = require('./handlers/invoiceHandler');
                     await invoiceHandler.handleInteraction(interaction);
-                } else if (interaction.customId === 'open_suggestion_modal') {
+                } else if (interaction.customId === 'open_suggestion' || interaction.customId === 'open_suggestion_modal') {
                     const suggestionCommand = require('./commands/suggestion');
                     await suggestionCommand.handleButton(interaction);
+                    return;
                 } else if (interaction.customId === 'suggestion_modal') {
                     const suggestionCommand = require('./commands/suggestion');
                     await suggestionCommand.handleModal(interaction);
+                    return;
                 } else {
                     // Importar el manejador de tickets
                     const ticketHandler = require('./handlers/ticketHandler');
