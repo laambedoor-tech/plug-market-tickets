@@ -538,18 +538,18 @@ class TicketHandler {
         const closerMention = closerId ? `<@${closerId}>` : 'Unknown';
         const userMention = userId ? `<@${userId}>` : interaction.user.toString();
         const starsDisplay = '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
-        const ratingColor = rating >= 4 ? config.colors.success : rating >= 3 ? config.colors.warning : config.colors.error;
 
         const reviewEmbed = new EmbedBuilder()
-            .setAuthor({ name: 'New Feedback Received', iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
-            .setDescription(`${starsDisplay}\n**Rating: ${rating}/5**`)
+            .setTitle('New feedback received!')
+            .setDescription(`Rating: ${starsDisplay} (${rating}/5)`)
             .addFields([
-                { name: '👤 Customer', value: userMention, inline: true },
-                { name: '🛠️ Staff', value: closerMention, inline: true },
-                { name: '🎫 Ticket', value: ticketId ? `\`${ticketId}\`` : 'Unknown', inline: true }
+                { name: 'Ticket', value: ticketId ? `#${ticketId}` : 'Unknown', inline: true },
+                { name: 'Customer', value: userMention, inline: true },
+                { name: 'Staff', value: closerMention, inline: true }
             ])
-            .setColor(ratingColor)
-            .setFooter({ text: 'Plug Market • Review System' })
+            .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
+            .setColor(config.colors.error)
+            .setFooter({ text: 'wezkoo' })
             .setTimestamp();
 
         try {
