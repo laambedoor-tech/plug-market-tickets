@@ -15,6 +15,11 @@ class TicketHandler {
                 await this.handleReviewSubmission(interaction);
                 return;
             }
+
+            if (interaction.customId.startsWith('rename_status:')) {
+                await this.handleRenameStatus(interaction);
+                return;
+            }
         }
 
         if (interaction.isButton()) {
@@ -556,6 +561,88 @@ class TicketHandler {
             await reviewChannel.send({ embeds: [reviewEmbed] });
         } catch (error) {
             console.error('Error sending the review to the configured channel:', error);
+        }
+    }
+
+    static async handleRenameStatus(interaction) {
+        const channel = interaction.channel;
+        const status = interaction.values[0];
+        
+        // Verify user who initiated the command
+        const userId = interaction.customId.split(':')[1];
+        if (interaction.user.id !== userId) {
+            return interaction.reply({
+                content: '❌ You cannot use this menu.',
+                flags: 64
+            });
+        }
+
+        // Permission check
+        if (!TicketHandler.hasClosePermission(interaction.member)) {
+            return interaction.reply({
+                content: '❌ You do not have permission to rename tickets.',
+                flags: 64
+            });
+        }
+
+        const statusConfig = {
+            'replace-done': {
+                name: 'replace-done',
+                nameWithEmoji: '✅replace-done',
+                emoji: '✅',
+                label: 'Replace Done',
+                color: config.colors.success,
+                description: 'Replacement has been completed successfully.'
+            },
+            'waiting-proofs': {
+                name: 'waiting-proofs',
+                nameWithEmoji: '🎯waiting-proofs',
+                emoji: '⏳',
+                label: 'Waiting Proofs',
+                color: config.colors.warning,
+                description: 'Waiting for user to provide proof.'
+            },
+            'pending-replace': {
+                name: 'pending-replace',
+                nameWithEmoji: '⌛pending-replace',
+                emoji: '⌛',
+                label: 'Pending Replace',
+                color: config.colors.primary,
+                description: 'Replacement is pending to be processed.'
+            }
+        };
+
+        const selectedStatus = statusConfig[status];
+        
+        try {
+            // Rename channel with new status
+            const nameSegment = selectedStatus.nameWithEmoji ?? selectedStatus.name;
+            await channel.setName(`ticket-${nameSegment}`);
+            
+            // Create embed for public message
+            const embed = new EmbedBuilder()
+                .setTitle(`${selectedStatus.emoji} Ticket Status Updated`)
+                .setDescription(
+                    `**New Status:** ${selectedStatus.label}\n` +
+                    `${selectedStatus.description}\n\n` +
+                    `Updated by: ${interaction.user}`
+                )
+                .setColor(selectedStatus.color)
+                .setFooter({ text: 'Plug Market Support System' })
+                .setTimestamp();
+
+            // Delete the select menu message
+            await interaction.deleteReply().catch(() => {});
+            
+            // Send public embed to channel
+            await channel.send({ embeds: [embed] });
+            
+        } catch (error) {
+            console.error('Error renaming ticket:', error);
+            await interaction.reply({
+                content: '❌ Error updating ticket status.',
+                flags: 64
+            }).catch(() => {});
         }
     }
 }

@@ -126,8 +126,9 @@ module.exports = {
     async closeTicket(interaction) {
         const channel = interaction.channel;
         
-        // Check if this is a ticket channel
-        if (!channel.name.startsWith('ticket-')) {
+        // Check if this is a ticket channel (by name or topic)
+        const isTicket = channel.name.startsWith('ticket-') || (channel.topic && channel.topic.includes('Ticket by'));
+        if (!isTicket) {
             return interaction.reply({
                 content: '❌ This command can only be used in ticket channels.',
                 flags: 64
@@ -174,8 +175,9 @@ module.exports = {
         const channel = interaction.channel;
         const user = interaction.options.getUser('user');
 
-        // Check if this is a ticket channel
-        if (!channel.name.startsWith('ticket-')) {
+        // Check if this is a ticket channel (by name or topic)
+        const isTicket = channel.name.startsWith('ticket-') || (channel.topic && channel.topic.includes('Ticket by'));
+        if (!isTicket) {
             return interaction.reply({
                 content: '❌ This command can only be used in ticket channels.',
                 flags: 64
@@ -218,8 +220,9 @@ module.exports = {
         const channel = interaction.channel;
         const user = interaction.options.getUser('user');
 
-        // Check if this is a ticket channel
-        if (!channel.name.startsWith('ticket-')) {
+        // Check if this is a ticket channel (by name or topic)
+        const isTicket = channel.name.startsWith('ticket-') || (channel.topic && channel.topic.includes('Ticket by'));
+        if (!isTicket) {
             return interaction.reply({
                 content: '❌ This command can only be used in ticket channels.',
                 flags: 64
