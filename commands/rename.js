@@ -5,7 +5,7 @@ const ALLOWED_CLOSE_ROLES = new Set((config.allowedCloseRoles || []).map(String)
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('rename')
-        .setDescription('Rename the ticket channel with status'),
+        .setDescription('Rename the ticket channel with predefined status options'),
 
     async execute(interaction) {
         const channel = interaction.channel;
