@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const config = require('../config-production.js');
+const config = require('../config.json');
 
 // ========================================
 // Obtener credenciales desde Supabase

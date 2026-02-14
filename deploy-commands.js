@@ -2,8 +2,8 @@ const { REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
-// Cargar configuración según el entorno
-const config = require('./config-production.js');
+// Cargar configuración
+const config = require('./config.json');
 
 const commands = [];
 

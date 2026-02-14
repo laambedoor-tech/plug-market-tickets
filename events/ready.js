@@ -1,5 +1,5 @@
 const { Events, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
-const config = require('../config-production.js');
+const config = require('../config.json');
 const fs = require('fs');
 const path = require('path');
 

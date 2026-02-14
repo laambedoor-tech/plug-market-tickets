@@ -1,5 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSelectMenuBuilder } = require('discord.js');
-const config = require('../config-production.js');
+const config = require('../config.json');
 
 const ALLOWED_CLOSE_ROLES = new Set((config.allowedCloseRoles || []).map(String));
 

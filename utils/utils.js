@@ -1,4 +1,4 @@
-const config = require('../config-production.js');
+const config = require('../config.json');
 
 class EmbedUtils {
     static createSuccessEmbed(title, description) {

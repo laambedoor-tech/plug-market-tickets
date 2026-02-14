@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
-const config = require('../config-production.js');
+const config = require('../config.json');
 
 function fetchWithTimeout(url, options = {}, timeoutMs = 2500) {
     const controller = new AbortController();
