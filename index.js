@@ -2,29 +2,26 @@ const { Client, GatewayIntentBits, Collection, Events, ActivityType, Partials } 
 const fs = require('fs');
 const path = require('path');
 
-// Cargar configuración (producción o desarrollo)
-let config;
+// Cargar variables de entorno desde .env
+require('dotenv').config();
+
+// Cargar configuración desde variables de entorno
+const config = require('./config-production.js');
 console.log(`🔧 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-if (process.env.NODE_ENV === 'production') {
-    config = require('./config-production.js');
-    console.log('📝 Configuración de producción cargada');
-    
-    // Validar variables de entorno críticas
-    if (!config.token) {
-        console.error('❌ ERROR CRÍTICO: DISCORD_TOKEN no está configurado');
-        process.exit(1);
-    }
-    if (!config.clientId) {
-        console.warn('⚠️ ADVERTENCIA: CLIENT_ID no está configurado (necesario para registrar comandos slash)');
-    }
-    if (!config.guildId) {
-        console.warn('ℹ️ INFO: GUILD_ID no está configurado (comandos se registrarán globalmente)');
-    }
-    console.log('✅ Token validado - Bot puede iniciar');
-} else {
-    config = require('./config.json');
-    console.log('📝 Configuración de desarrollo cargada');
+console.log('📝 Configuración cargada desde variables de entorno');
+
+// Validar variables de entorno críticas
+if (!config.token) {
+    console.error('❌ ERROR CRÍTICO: DISCORD_TOKEN no está configurado en .env');
+    process.exit(1);
 }
+if (!config.clientId) {
+    console.warn('⚠️ ADVERTENCIA: CLIENT_ID no está configurado (necesario para registrar comandos slash)');
+}
+if (!config.guildId) {
+    console.warn('ℹ️ INFO: GUILD_ID no está configurado (comandos se registrarán globalmente)');
+}
+console.log('✅ Token validado - Bot puede iniciar');
 
 // Crear cliente de Discord con configuración optimizada para Render
 const client = new Client({
