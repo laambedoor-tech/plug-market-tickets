@@ -1,5 +1,5 @@
 const { EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
-const config = require('../config.json');
+const config = require('../config-production.js');
 
 async function fetchInvoiceByOrderId(orderId) {
     const supabaseUrl = config.supabaseUrl || process.env.SUPABASE_URL;
