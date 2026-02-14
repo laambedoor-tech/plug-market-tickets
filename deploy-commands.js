@@ -3,12 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Cargar configuración según el entorno
-let config;
-if (process.env.NODE_ENV === 'production') {
-    config = require('./config-production.js');
-} else {
-    config = require('./config.json');
-}
+const config = require('./config-production.js');
 
 const commands = [];
 
