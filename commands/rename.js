@@ -44,13 +44,13 @@ module.exports = {
                     label: 'Waiting Proofs',
                     description: 'Waiting for proof from user',
                     value: 'waiting-proofs',
-                    emoji: '⏳'
+                    emoji: '📋'
                 },
                 {
-                    label: 'Pending Replace',
+                    label: 'Replace Pending',
                     description: 'Replacement is pending',
-                    value: 'pending-replace',
-                    emoji: '⌛'
+                    value: 'replace-pending',
+                    emoji: '🔴'
                 }
             ]);
 

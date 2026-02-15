@@ -588,36 +588,56 @@ class TicketHandler {
         const statusConfig = {
             'replace-done': {
                 name: 'replace-done',
-                nameWithEmoji: '✅replace-done',
+                nameWithEmoji: '✅ • replace-done',
                 emoji: '✅',
                 label: 'Replace Done',
-                color: config.colors.success,
+                color: 0x57F287,
                 description: 'Replacement has been completed successfully.'
             },
             'waiting-proofs': {
                 name: 'waiting-proofs',
-                nameWithEmoji: '🎯waiting-proofs',
-                emoji: '⏳',
+                nameWithEmoji: '📋 • waiting-proofs',
+                emoji: '📋',
                 label: 'Waiting Proofs',
-                color: config.colors.warning,
+                color: 0xFEE75C,
                 description: 'Waiting for user to provide proof.'
             },
+            'replace-pending': {
+                name: 'replace-pending',
+                nameWithEmoji: '🔴 • replace-pending',
+                emoji: '🔴',
+                label: 'Replace Pending',
+                color: 0xED4245,
+                description: 'Replacement is pending to be processed.'
+            },
+            // Backwards compatibility for old menu
             'pending-replace': {
-                name: 'pending-replace',
-                nameWithEmoji: '⌛pending-replace',
-                emoji: '⌛',
-                label: 'Pending Replace',
-                color: config.colors.primary,
+                name: 'replace-pending',
+                nameWithEmoji: '🔴 • replace-pending',
+                emoji: '🔴',
+                label: 'Replace Pending',
+                color: 0xED4245,
                 description: 'Replacement is pending to be processed.'
             }
         };
 
         const selectedStatus = statusConfig[status];
         
+        // Validate status exists
+        if (!selectedStatus) {
+            return interaction.reply({
+                content: '❌ Invalid status selected. Please use /rename again.',
+                flags: 64
+            });
+        }
+        
         try {
+            // Defer update to acknowledge the interaction immediately
+            await interaction.deferUpdate();
+            
             // Rename channel with new status
             const nameSegment = selectedStatus.nameWithEmoji ?? selectedStatus.name;
-            await channel.setName(`ticket-${nameSegment}`);
+            await channel.setName(nameSegment);
             
             // Create embed for public message
             const embed = new EmbedBuilder()
@@ -631,7 +651,7 @@ class TicketHandler {
                 .setFooter({ text: 'Plug Market Support System' })
                 .setTimestamp();
 
-            // Delete the select menu message
+            // Delete the original menu message
             await interaction.deleteReply().catch(() => {});
             
             // Send public embed to channel
@@ -639,7 +659,7 @@ class TicketHandler {
             
         } catch (error) {
             console.error('Error renaming ticket:', error);
-            await interaction.reply({
+            await interaction.followUp({
                 content: '❌ Error updating ticket status.',
                 flags: 64
             }).catch(() => {});
