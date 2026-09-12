@@ -279,7 +279,7 @@ module.exports = {
                     }
                 )
                 .setFooter({ 
-                    text: `Plug Market • Sistema Automático`, 
+                    text: `sloWmo • Sistema Automático`, 
                     iconURL: interaction.client.user.displayAvatarURL() 
                 })
                 .setTimestamp();

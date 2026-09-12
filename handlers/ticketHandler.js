@@ -186,7 +186,7 @@ class TicketHandler {
         const embed = new EmbedBuilder()
             .setTitle(`🎫 ${categoryInfo.name} Ticket`)
             .setDescription(
-                `Hello ${user}! Thank you for contacting **Plug Market**.\n\n` +
+                `Hello ${user}! Thank you for contacting **sloWmo**.\n\n` +
                 `**Category:** ${categoryInfo.name}\n` +
                 `**Description:** ${categoryInfo.description}\n\n` +
                 `A member of the support team will assist you soon. Meanwhile, you can provide more details about your inquiry.\n\n` +
@@ -214,8 +214,8 @@ class TicketHandler {
                 }
             ])
             .setFooter({
-                text: 'Plug Market Support System',
-                iconURL: 'https://cdn.discordapp.com/attachments/1234567890123456789/1234567890123456789/plug-market-icon.png'
+                text: 'sloWmo Support System',
+                iconURL: 'https://cdn.discordapp.com/attachments/1234567890123456789/1234567890123456789/slowmo-icon.png'
             })
             .setTimestamp();
 
@@ -418,7 +418,7 @@ class TicketHandler {
         const embed = new EmbedBuilder()
             .setTitle('⭐ Rate Your Support Experience')
             .setDescription(
-                `Thank you for contacting **Plug Market Support**!\n\n` +
+                `Thank you for contacting **sloWmo Support**!\n\n` +
                 `Your ticket has been closed. We'd love to hear your feedback!\n` +
                 `Please rate the support you received from **${closer ? closer.username : 'our team'}**.`
             )
@@ -429,7 +429,7 @@ class TicketHandler {
             ])
             .setColor(config.colors.primary)
             .setThumbnail(closer ? closer.displayAvatarURL({ dynamic: true }) : null)
-            .setFooter({ text: 'Plug Market • Feedback System' })
+            .setFooter({ text: 'sloWmo • Feedback System' })
             .setTimestamp();
 
         try {
@@ -526,7 +526,7 @@ class TicketHandler {
                 `Your review helps us improve our service quality.`
             )
             .setColor(config.colors.success)
-            .setFooter({ text: 'Plug Market • We appreciate your feedback!' })
+            .setFooter({ text: 'sloWmo • We appreciate your feedback!' })
             .setTimestamp();
 
         await interaction.update({ embeds: [thanksEmbed], components: [] });
@@ -648,7 +648,7 @@ class TicketHandler {
                     `Updated by: ${interaction.user}`
                 )
                 .setColor(selectedStatus.color)
-                .setFooter({ text: 'Plug Market Support System' })
+                .setFooter({ text: 'sloWmo Support System' })
                 .setTimestamp();
 
             // Delete the original menu message

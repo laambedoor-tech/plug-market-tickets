@@ -61,7 +61,7 @@ module.exports = {
                 { name: 'Winners', value: String(giveawayData.ganadores || 1), inline: true },
                 { name: 'Giveaway message', value: `[Jump to message](${jumpLink})` }
             )
-            .setColor('#9d4edd');
+            .setColor('#3a86ff');
 
         return interaction.editReply({ embeds: [embed] });
     }

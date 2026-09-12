@@ -14,8 +14,8 @@ const config = {
     credentialsTable: process.env.CREDENTIALS_TABLE || "credentials",
     invoicesApiUrl: process.env.INVOICES_API_URL || "",
     colors: {
-        primary: "#9d4edd",
-        secondary: "#c77dff",
+        primary: "#3a86ff",
+        secondary: "#7dc4ff",
         success: "#06d6a0",
         error: "#ef476f",
         warning: "#ffd166"

@@ -1,6 +1,6 @@
-# 🏪 Plug Market Tickets Bot
+# 🏪 sloWmo Tickets Bot
 
-Un bot de Discord avanzado para manejar tickets de soporte, inspirado en el sistema Nebula Tickets pero personalizado para Plug Market.
+Un bot de Discord avanzado para manejar tickets de soporte, inspirado en el sistema Nebula Tickets pero personalizado para sloWmo.
 
 ## ✨ Características
 
@@ -9,7 +9,7 @@ Un bot de Discord avanzado para manejar tickets de soporte, inspirado en el sist
 - 🔒 Sistema de permisos robusto
 - 📊 Logs de actividad completos
 - 🛠️ Fácil configuración y personalización
-- 💜 Diseño inspirado en Plug Market
+- 💙 Diseño inspirado en sloWmo
 
 ### 📋 Categorías de Tickets
 
@@ -121,8 +121,8 @@ Puedes cambiar los colores en `config.json`:
 
 ```json
 "colors": {
-  "primary": "#9d4edd",    // Color principal (morado)
-  "secondary": "#c77dff",  // Color secundario
+  "primary": "#3a86ff",    // Color principal (azul)
+  "secondary": "#7dc4ff",  // Color secundario
   "success": "#06d6a0",    // Verde para éxito
   "error": "#ef476f",      // Rojo para errores
   "warning": "#ffd166"     // Amarillo para advertencias
@@ -179,7 +179,7 @@ Para personalizar las imágenes en los embeds:
 ## 📊 Estructura del Proyecto
 
 ```
-Plug Market Tickets/
+sloWmo Tickets/
 ├── commands/
 │   ├── ticket.js       # Comando principal de tickets
 │   └── setup.js        # Comandos de configuración
@@ -209,9 +209,9 @@ Si tienes problemas con el bot:
 ## 📝 Créditos
 
 - Inspirado en el diseño de Nebula Tickets
-- Creado para Plug Market
+- Creado para sloWmo ([slowmo.es](https://slowmo.es))
 - Desarrollado con Discord.js v14
 
 ---
 
-**¡Disfruta tu nuevo sistema de tickets para Plug Market! 🏪✨**
+**¡Disfruta tu nuevo sistema de tickets para sloWmo! 🏪✨**

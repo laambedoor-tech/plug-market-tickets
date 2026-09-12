@@ -179,7 +179,7 @@ module.exports = {
                     `👥 **Participants:** 0\n\n` +
                     `*Click the button below to secure your entry!*`
                 )
-                .setColor('#9d4edd')
+                .setColor('#3a86ff')
                 .setTimestamp(finalizaDate)
                 .setFooter({ text: `Finaliza` });
 
@@ -280,7 +280,7 @@ module.exports = {
                     `👥 **Participants:** ${giveawayData.participantes.length}\n\n` +
                     `*Click the button below to secure your entry!*`
                 )
-                .setColor('#9d4edd')
+                .setColor('#3a86ff')
                 .setTimestamp(new Date(giveawayData.finaliza))
                 .setFooter({ text: 'Finaliza' });
 

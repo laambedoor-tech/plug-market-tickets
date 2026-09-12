@@ -8,10 +8,10 @@ module.exports = {
     once: true,
     async execute(client) {
         console.log(`\n🤖 ===============================`);
-        console.log(`   PLUG MARKET TICKETS BOT`);
+        console.log(`   SLOWMO TICKETS BOT`);
         console.log(`===============================`);
         console.log(`✅ Bot iniciado: ${client.user.tag}`);
-        console.log(`🏪 Tienda: Plug Market`);
+        console.log(`🏪 Tienda: sloWmo`);
         console.log(`📊 Servidores: ${client.guilds.cache.size}`);
         console.log(`👥 Usuarios: ${client.users.cache.size}`);
         console.log(`📅 Fecha: ${new Date().toLocaleString('es-ES')}`);
@@ -95,11 +95,11 @@ async function sendTicketPanel(client) {
         if (!channel) return;
 
         const embed = new EmbedBuilder()
-            .setTitle('Plug Market - Ticket System')
-            .setDescription('**Welcome to Plug Market!**\n\nHere begins the support channel.\n\nIf you need help, click on the option corresponding to the type of ticket you want to open.\n\n**Response time may vary due to many factors, so please be patient.**')
+            .setTitle('sloWmo - Ticket System')
+            .setDescription('**Welcome to sloWmo!**\n\nHere begins the support channel.\n\nIf you need help, click on the option corresponding to the type of ticket you want to open.\n\n**Response time may vary due to many factors, so please be patient.**')
             .setColor(config.colors.primary)
             .setFooter({
-                text: 'Plug Market Support System',
+                text: 'sloWmo Support System',
                 iconURL: client.user.displayAvatarURL()
             })
             .setTimestamp();

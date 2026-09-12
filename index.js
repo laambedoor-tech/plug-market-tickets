@@ -1,14 +1,22 @@
 const { Client, GatewayIntentBits, Collection, Events, ActivityType, Partials } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const dotenv = require('dotenv');
+
+// Cargar .env desde la carpeta del proyecto, aunque el proceso arranque en otro directorio
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 // Cargar configuración
-const config = require('./config.json');
-console.log('📝 Configuración cargada desde config.json');
+const config = process.env.DISCORD_TOKEN
+    ? require('./config-production')
+    : require('./config.json');
+console.log(process.env.DISCORD_TOKEN
+    ? '📝 Configuración cargada desde variables de entorno'
+    : '📝 Configuración cargada desde config.json');
 
 // Validar token
 if (!config.token) {
-    console.error('❌ ERROR CRÍTICO: Token no está configurado en config.json');
+    console.error('❌ ERROR CRÍTICO: Token no está configurado ni en variables de entorno ni en config.json');
     process.exit(1);
 }
 console.log('✅ Token validado - Bot puede iniciar');
@@ -131,7 +139,7 @@ if (fs.existsSync(eventsPath)) {
 // Evento ready
 client.once(Events.ClientReady, async () => {
     console.log(`✅ Bot iniciado como ${client.user.tag}`);
-    console.log(`🏪 Plug Market Tickets - Sistema de Soporte`);
+    console.log(`🏪 sloWmo Tickets - Sistema de Soporte`);
     console.log(`📊 Sirviendo en ${client.guilds.cache.size} servidor(es)`);
     console.log(`🤖 Bot ID: ${client.user.id}`);
     console.log(`⏰ Timestamp: ${new Date().toISOString()}`);
@@ -143,7 +151,7 @@ client.once(Events.ClientReady, async () => {
     }
     
     // Establecer actividad
-    client.user.setActivity('Plug Market | /ticket', { type: ActivityType.Watching });
+    client.user.setActivity('sloWmo | /ticket', { type: ActivityType.Watching });
 
     // Enviar embed de sugerencias automáticamente (DESACTIVADO)
     /*
@@ -173,6 +181,14 @@ client.once(Events.ClientReady, async () => {
         console.error('Error al enviar embed de sugerencias:', error);
     }
     */
+
+    // Enviar panel de applications de staff automáticamente
+    try {
+        const staffApplicationHandler = require('./handlers/staffApplicationHandler');
+        await staffApplicationHandler.sendPanelIfMissing(client);
+    } catch (error) {
+        console.error('Error al enviar panel automático de staff applications:', error);
+    }
 });
 
 // Manejar mensajes (comandos de prefijo)
@@ -210,10 +226,10 @@ client.on(Events.MessageCreate, async message => {
     if (command === 'help') {
         const { EmbedBuilder } = require('discord.js');
         const helpEmbed = new EmbedBuilder()
-            .setColor('#9d4edd')
+            .setColor('#3a86ff')
             .setTitle('📋 Comandos Disponibles')
             .addFields(
-                { name: '!embed {json}', value: 'Envía un embed personalizado. Ej:\n```!embed {"title":"Mi Titulo","description":"Mi descripción","color":"#9d4edd"}```' }
+                { name: '!embed {json}', value: 'Envía un embed personalizado. Ej:\n```!embed {"title":"Mi Titulo","description":"Mi descripción","color":"#3a86ff"}```' }
             )
             .setTimestamp();
         
@@ -278,10 +294,20 @@ client.on(Events.InteractionCreate, async interaction => {
                     await invoiceHandler.handleInteraction(interaction);
                 } else if (interaction.customId === 'open_suggestion_modal') {
                     const suggestionCommand = require('./commands/suggestion');
+                    console.log('📝 Abriendo modal de sugerencias...');
                     await suggestionCommand.handleButton(interaction);
+                    console.log('✅ Modal de sugerencias mostrado');
                 } else if (interaction.customId === 'suggestion_modal') {
                     const suggestionCommand = require('./commands/suggestion');
+                    console.log('📝 Procesando sugerencia...');
                     await suggestionCommand.handleModal(interaction);
+                    console.log('✅ Sugerencia procesada');
+                } else if (
+                    interaction.customId === 'staff_apply_open_modal' ||
+                    interaction.customId === 'staff_apply_modal'
+                ) {
+                    const staffApplicationHandler = require('./handlers/staffApplicationHandler');
+                    await staffApplicationHandler.handleInteraction(interaction);
                 } else {
                     // Importar el manejador de tickets
                     const ticketHandler = require('./handlers/ticketHandler');
@@ -371,7 +397,7 @@ if (process.env.RENDER_SERVICE_TYPE === 'web') {
     const http = require('http');
     const server = http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end(`Plug Market Tickets Bot is running!\nBot Status: ${client.isReady() ? 'Online' : 'Connecting...'}\nUptime: ${Math.floor(client.uptime / 1000)}s`);
+        res.end(`sloWmo Tickets Bot is running!\nBot Status: ${client.isReady() ? 'Online' : 'Connecting...'}\nUptime: ${Math.floor(client.uptime / 1000)}s`);
     });
 
     server.listen(PORT, () => {

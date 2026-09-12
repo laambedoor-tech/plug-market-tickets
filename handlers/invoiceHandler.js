@@ -76,7 +76,7 @@ class InvoiceHandler {
             const embed = new EmbedBuilder()
                 .setTitle(`📦 Order Items • ${orderId}`)
                 .setColor(config.colors.primary)
-                .setFooter({ text: 'Plug Market', iconURL: interaction.client.user.displayAvatarURL() })
+                .setFooter({ text: 'sloWmo', iconURL: interaction.client.user.displayAvatarURL() })
                 .setTimestamp();
 
             items.forEach((it, idx) => {
@@ -198,7 +198,7 @@ class InvoiceHandler {
                 { name: '👤 Staff', value: interaction.user.toString(), inline: true },
                 { name: '📝 Account / Credentials', value: `\`\`\`\n${account}\n\`\`\``, inline: false }
             )
-            .setFooter({ text: 'Plug Market • Replacement System', iconURL: interaction.client.user.displayAvatarURL() })
+            .setFooter({ text: 'sloWmo • Replacement System', iconURL: interaction.client.user.displayAvatarURL() })
             .setTimestamp();
 
         await interaction.reply({ embeds: [replacementEmbed] });

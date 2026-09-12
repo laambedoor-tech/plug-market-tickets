@@ -8,7 +8,7 @@ module.exports = {
         .addStringOption(option =>
             option
                 .setName('json')
-                .setDescription('JSON del embed (ejemplo: {"title":"Título","description":"Descripción","color":"#9d4edd"})')
+                .setDescription('JSON del embed (ejemplo: {"title":"Título","description":"Descripción","color":"#3a86ff"})')
                 .setRequired(true)
         )
         .addChannelOption(option =>
@@ -46,7 +46,7 @@ module.exports = {
                 embedData = JSON.parse(jsonString);
             } catch (parseError) {
                 return interaction.editReply({
-                    content: `❌ JSON inválido. Error: ${parseError.message}\n\n**Ejemplo de uso:**\n\`\`\`json\n{"title":"Mi Título","description":"Mi descripción","color":"#9d4edd"}\n\`\`\``
+                    content: `❌ JSON inválido. Error: ${parseError.message}\n\n**Ejemplo de uso:**\n\`\`\`json\n{"title":"Mi Título","description":"Mi descripción","color":"#3a86ff"}\n\`\`\``
                 });
             }
 

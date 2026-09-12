@@ -37,7 +37,7 @@ module.exports = {
                 `<:user:1457824415839424683> **Email/Username**\nThe account credentials you used`
             )
             .setColor(config.colors.primary)
-            .setFooter({ text: 'Plug Market • Replacement', iconURL: interaction.client.user.displayAvatarURL() })
+            .setFooter({ text: 'sloWmo • Replacement', iconURL: interaction.client.user.displayAvatarURL() })
             .setTimestamp();
 
         await interaction.reply({ embeds: [embed] });

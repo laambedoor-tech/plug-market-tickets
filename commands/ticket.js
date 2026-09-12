@@ -1,11 +1,20 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const config = require('../config.json');
 const ALLOWED_CLOSE_ROLES = new Set((config.allowedCloseRoles || []).map(String));
+const STAFF_APPLICATION_CATEGORY_ID = '1485380098059276340';
+
+function isTicketChannel(channel) {
+    if (!channel) return false;
+    if (channel.name?.startsWith('ticket-') || channel.name?.startsWith('staff-app-')) return true;
+    if (channel.topic && (channel.topic.includes('Ticket by') || channel.topic.includes('Staff Application by'))) return true;
+    if (channel.parentId === config.ticketsCategory || channel.parentId === STAFF_APPLICATION_CATEGORY_ID) return true;
+    return false;
+}
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ticket')
-        .setDescription('🎫 Plug Market ticket system')
+        .setDescription('🎫 sloWmo ticket system')
         .addSubcommand(subcommand =>
             subcommand
                 .setName('panel')
@@ -74,12 +83,12 @@ module.exports = {
         }
 
         const embed = new EmbedBuilder()
-            .setTitle('Plug Market - Ticket System')
-            .setDescription('**Welcome to Plug Market!**\n\nHere begins the support channel.\n\nIf you need help, click on the option corresponding to the type of ticket you want to open.\n\n**Response time may vary due to many factors, so please be patient.**')
+            .setTitle('sloWmo - Ticket System')
+            .setDescription('**Welcome to sloWmo!**\n\nHere begins the support channel.\n\nIf you need help, click on the option corresponding to the type of ticket you want to open.\n\n**Response time may vary due to many factors, so please be patient.**')
             .setColor(config.colors.primary)
             .setThumbnail(interaction.client.user.displayAvatarURL())
             .setFooter({
-                text: 'Plug Market Support System',
+                text: 'sloWmo Support System',
                 iconURL: interaction.client.user.displayAvatarURL()
             })
             .setTimestamp();
@@ -124,11 +133,11 @@ module.exports = {
     },
 
     async closeTicket(interaction) {
-        const channel = interaction.channel;
-        
-        // Check if this is a ticket channel (by name or topic)
-        const isTicket = channel.name.startsWith('ticket-') || (channel.topic && channel.topic.includes('Ticket by'));
-        if (!isTicket) {
+        let channel = interaction.channel;
+        if (!channel || channel.partial) {
+            channel = await interaction.guild.channels.fetch(interaction.channelId).catch(() => null);
+        }
+        if (!isTicketChannel(channel)) {
             return interaction.reply({
                 content: '❌ This command can only be used in ticket channels.',
                 flags: 64
@@ -172,12 +181,13 @@ module.exports = {
     },
 
     async addUser(interaction) {
-        const channel = interaction.channel;
+        let channel = interaction.channel;
+        if (!channel || channel.partial) {
+            channel = await interaction.guild.channels.fetch(interaction.channelId).catch(() => null);
+        }
         const user = interaction.options.getUser('user');
 
-        // Check if this is a ticket channel (by name or topic)
-        const isTicket = channel.name.startsWith('ticket-') || (channel.topic && channel.topic.includes('Ticket by'));
-        if (!isTicket) {
+        if (!isTicketChannel(channel)) {
             return interaction.reply({
                 content: '❌ This command can only be used in ticket channels.',
                 flags: 64
@@ -217,12 +227,13 @@ module.exports = {
     },
 
     async removeUser(interaction) {
-        const channel = interaction.channel;
+        let channel = interaction.channel;
+        if (!channel || channel.partial) {
+            channel = await interaction.guild.channels.fetch(interaction.channelId).catch(() => null);
+        }
         const user = interaction.options.getUser('user');
 
-        // Check if this is a ticket channel (by name or topic)
-        const isTicket = channel.name.startsWith('ticket-') || (channel.topic && channel.topic.includes('Ticket by'));
-        if (!isTicket) {
+        if (!isTicketChannel(channel)) {
             return interaction.reply({
                 content: '❌ This command can only be used in ticket channels.',
                 flags: 64

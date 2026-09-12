@@ -4,7 +4,7 @@ const config = require('../config.json');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('setup')
-        .setDescription('🔧 Configurar el bot de tickets de Plug Market')
+        .setDescription('🔧 Configurar el bot de tickets de sloWmo')
         .addSubcommand(subcommand =>
             subcommand
                 .setName('info')
@@ -47,7 +47,7 @@ module.exports = {
         const logChannel = guild.channels.cache.get(config.logChannel);
 
         const embed = new EmbedBuilder()
-            .setTitle('🔧 Configuración de Plug Market Tickets')
+            .setTitle('🔧 Configuración de sloWmo Tickets')
             .setDescription('Estado actual de la configuración del bot:')
             .addFields([
                 {

@@ -165,7 +165,7 @@ function buildInvoiceEmbed(invoice, interaction) {
         }
     }
 
-    e.setFooter({ text: 'Plug Market • Invoice Lookup', iconURL: interaction.client.user.displayAvatarURL() });
+    e.setFooter({ text: 'sloWmo • Invoice Lookup', iconURL: interaction.client.user.displayAvatarURL() });
     
     // Botones de acción
     const seeItemsBtn = new ButtonBuilder()
